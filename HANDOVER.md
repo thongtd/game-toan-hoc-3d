@@ -81,6 +81,15 @@ nằm trong viewport (trước đó bị đẩy ra ngoài ở 360×640).
 | `npm run assets:validate`          | ✅ PASS                                         |
 | `npm run test:e2e`                 | ⚠️ **CHƯA chạy lại đầy đủ sau các thay đổi UI** |
 
+**Mốc thời gian của các kết quả trên:** typecheck / lint / format:check được chạy lại
+sau cùng, sau đợt sửa UI mobile. `npm test` (231 test) xanh ở lần chạy **trước** đợt
+sửa UI đó; đợt sửa chỉ động vào CSS, `index.html`, `PlayerHubScreen.ts` và
+`debug-bridge.ts` nên nhiều khả năng vẫn xanh, nhưng **nên chạy lại để chắc chắn**:
+
+```bash
+npm test
+```
+
 Ghi chú E2E: lần chạy trước khi sửa UI còn 13 test đỏ, nguyên nhân đã xác định và
 đã sửa (các test `goto('/')` rồi chờ `screen-home` mà chưa tạo hồ sơ → đã thêm
 `ensureProfile`). Sau đó code UI thay đổi nên **cần chạy lại từ đầu**:
@@ -143,6 +152,21 @@ Cần chụp và lưu vào `artifacts/screenshots/` (E2E tự sinh một phần)
 - `scripts/visual-qa.mjs` còn hard-code đường dẫn cũ `D:/T3SKY/projects/...` — nên sửa
   hoặc xoá vì đã có `.ui-review.mjs` thay thế.
 - ~~`data/*.db*` bị theo dõi trong git~~ — đã gỡ khỏi index và thêm `data/` vào `.gitignore`.
+
+---
+
+## 3.6. Trạng thái git khi bàn giao
+
+Ba commit đã tạo trên nhánh `main`, **chưa push**:
+
+| Commit    | Nội dung                                                                                                                                       |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `58cd9d8` | `chore: normalise line endings and apply Prettier` — thêm `.gitattributes`, chạy Prettier cho các file chỉ lệch định dạng, gỡ `data/` khỏi git |
+| `e6a0c5e` | `feat: five maps and score-based speed` — toàn bộ tính năng, test, tài liệu                                                                    |
+| `6b822db` | `style: format index.html and the UI review script`                                                                                            |
+
+Trên máy mới, sau khi `git pull`, chạy `git add --renormalize .` một lần nếu thấy
+Git báo lệch dòng hàng loạt.
 
 ---
 
