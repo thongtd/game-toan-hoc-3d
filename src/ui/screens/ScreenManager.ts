@@ -6,6 +6,7 @@ export type ScreenName =
   | 'playerHub'
   | 'home'
   | 'tutorial'
+  | 'mapLoading'
   | 'countdown'
   | 'hud'
   | 'pause'
@@ -18,6 +19,7 @@ const SCREEN_IDS: Readonly<Record<ScreenName, string>> = {
   playerHub: 'screen-player-hub',
   home: 'screen-home',
   tutorial: 'screen-tutorial',
+  mapLoading: 'screen-map-loading',
   countdown: 'screen-countdown',
   hud: 'screen-hud',
   pause: 'screen-pause',
@@ -43,6 +45,7 @@ export class ScreenManager {
       playerHub: requireElement(SCREEN_IDS.playerHub),
       home: requireElement(SCREEN_IDS.home),
       tutorial: requireElement(SCREEN_IDS.tutorial),
+      mapLoading: requireElement(SCREEN_IDS.mapLoading),
       countdown: requireElement(SCREEN_IDS.countdown),
       hud: requireElement(SCREEN_IDS.hud),
       pause: requireElement(SCREEN_IDS.pause),

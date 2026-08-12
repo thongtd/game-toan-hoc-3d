@@ -1,32 +1,32 @@
 import type { Grade } from '../game-types.ts';
-import { getGradeConfig } from '../content/grade-config.ts';
-import { createRng } from '../math/seeded-rng.ts';
+import {
+  BASE_GATE_DISTANCE,
+  MIN_READING_SECONDS_BY_GRADE,
+  SAFETY_MARGIN_WORLD_UNITS,
+  SPEED_CONFIG,
+  gateDistanceForQuestion,
+  targetSpeedForScore,
+} from './speed-config.ts';
 
 /**
- * The pacing of one run: how fast the world moves and how long the player has
- * to read each question.
+ * The pacing of one question: how fast the world is moving while it is on
+ * screen and how long the player has before the gate arrives.
  *
- * This is shared deterministic logic. The browser uses it to place the gates,
- * and the server uses it to recompute the speed bonus when it verifies a run,
- * so both sides agree on the scoring window without the client sending it.
+ * This is shared deterministic logic. The browser uses it to place each gate,
+ * and the server uses the very same function to recompute the speed bonus when
+ * it verifies a run - so the window a score is judged against is exactly the
+ * window the child was given.
+ *
+ * Pacing depends on the score so far, never on the question number, so two
+ * players on the same question can legitimately be running at different speeds.
  */
 
-/** Distance from the player to the first gate of a run. */
-export const FIRST_GATE_DISTANCE = 48;
-export const GATE_DISTANCE_MIN = 45;
-export const GATE_DISTANCE_MAX = 55;
-
-/** A question must stay readable for at least this long before its gate. */
-export const MIN_READING_SECONDS = 4.5;
-
-/** Speed added to the world after each resolved question. */
-export const SPEED_INCREMENT_PER_QUESTION = 0.28;
-
-/** Keeps the pacing RNG independent of the question generator's stream. */
-const PACING_SEED_MIX = 0x5bf03635;
+export { BASE_GATE_DISTANCE, MIN_READING_SECONDS_BY_GRADE, SAFETY_MARGIN_WORLD_UNITS };
 
 export interface QuestionPacing {
   index: number;
+  /** Speed tier 0..5 the world is heading for while this question is up. */
+  tier: number;
   /** World speed while this question is on screen, in units per second. */
   speed: number;
   /** Distance the gate is placed ahead of the player. */
@@ -36,32 +36,25 @@ export interface QuestionPacing {
 }
 
 /**
- * Computes the pacing for every question in a run.
+ * Pacing for one question, given the score the player had when it appeared.
  *
- * Depends only on `grade`, `seed` and `count`, so the same three inputs always
- * produce the same schedule on any machine.
+ * `currentSpeed` is only used for gate spacing during the 0.65 s ramp; leaving
+ * it out plans for the target speed, which is what the verifier does.
  */
-export function computeRunPacing(grade: Grade, seed: number, count: number): QuestionPacing[] {
-  const config = getGradeConfig(grade);
-  const rng = createRng(seed ^ PACING_SEED_MIX);
+export function pacingForQuestion(
+  grade: Grade,
+  index: number,
+  scoreBefore: number,
+  currentSpeed = 0,
+): QuestionPacing {
+  const speed = targetSpeedForScore(scoreBefore);
+  const distance = gateDistanceForQuestion(grade, currentSpeed, speed);
 
-  const pacing: QuestionPacing[] = [];
-  let speed = config.baseSpeed;
-
-  for (let index = 0; index < count; index += 1) {
-    const base =
-      index === 0
-        ? FIRST_GATE_DISTANCE
-        : GATE_DISTANCE_MIN + rng.next() * (GATE_DISTANCE_MAX - GATE_DISTANCE_MIN);
-
-    // Stretch the spacing whenever the world speed would leave less than the
-    // required reading time.
-    const distance = Math.max(base, speed * MIN_READING_SECONDS);
-
-    pacing.push({ index, speed, distance, windowMs: (distance / speed) * 1000 });
-
-    speed = Math.min(config.maxSpeed, speed + SPEED_INCREMENT_PER_QUESTION);
-  }
-
-  return pacing;
+  return {
+    index,
+    tier: Math.round((speed - SPEED_CONFIG.baseSpeed) / SPEED_CONFIG.speedPerTier),
+    speed,
+    distance,
+    windowMs: (distance / speed) * 1000,
+  };
 }

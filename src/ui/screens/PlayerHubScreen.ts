@@ -145,6 +145,9 @@ export class PlayerHubScreen {
     this.savedProfile = null;
     this.selectedAge = suggestedAge;
     this.nicknameInput.value = '';
+    // Start on a real avatar rather than an empty frame: a child sees a
+    // character straight away and only opens the picker to change it.
+    this.setAvatar(resolveAvatarForDisplay(this.selectedAvatarId));
     this.setMode('create');
     this.clearNotice();
   }
@@ -185,7 +188,8 @@ export class PlayerHubScreen {
   /** Personal bests and age, shown only in the player's own pass. */
   setStats(age: number, bestScores: Partial<Record<Grade, number>>, grade: Grade): void {
     const best = bestScores[grade] ?? 0;
-    const bestText = best > 0 ? `Kỷ lục Lớp ${String(grade)}: ${formatScore(best)}` : 'Chưa có kỷ lục';
+    const bestText =
+      best > 0 ? `Kỷ lục Lớp ${String(grade)}: ${formatScore(best)}` : 'Chưa có kỷ lục';
     setText(this.stats, `Tuổi ${String(age)} · ${bestText}`);
   }
 

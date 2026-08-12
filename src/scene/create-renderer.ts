@@ -28,6 +28,9 @@ export function createRenderer(
       alpha: false,
       powerPreference: 'high-performance',
       failIfMajorPerformanceCaveat: false,
+      // Reading pixels back needs the drawing buffer to survive compositing.
+      // It costs performance, so only the thumbnail capture route asks for it.
+      preserveDrawingBuffer: isThumbnailCapture(),
     });
   } catch (error) {
     throw new WebGLUnavailableError(error);
@@ -40,6 +43,11 @@ export function createRenderer(
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   return renderer;
+}
+
+/** True on the `?previewMap=` route used to photograph the maps. */
+function isThumbnailCapture(): boolean {
+  return new URLSearchParams(window.location.search).has('previewMap');
 }
 
 export function applyQuality(renderer: THREE.WebGLRenderer, quality: QualitySettings): void {

@@ -1,4 +1,5 @@
 import type { Grade, LaneIndex } from '../game-types.ts';
+import type { MapId } from '../maps/map-manifest.ts';
 import type { NicknameErrorCode } from '../validation/nickname.ts';
 import type { AgeErrorCode, AvatarErrorCode } from '../validation/profile.ts';
 
@@ -38,6 +39,7 @@ export type ApiErrorCode =
   | 'RUN_EXPIRED'
   | 'RUN_ALREADY_FINISHED'
   | 'RUN_REJECTED'
+  | 'MAP_NOT_AVAILABLE'
   | 'TOO_MANY_REQUESTS'
   | 'PAYLOAD_TOO_LARGE'
   | 'UNSUPPORTED_MEDIA_TYPE'
@@ -97,21 +99,35 @@ export interface UpdatePlayerRequest {
   avatarId?: string;
 }
 
+/** Which maps this player has been playing, for the smart-random pick. */
+export interface PlayerMapStatsDto {
+  /** Most recent first, at most ten entries. */
+  recentMapIds: MapId[];
+  totalPlays: Partial<Record<MapId, number>>;
+  lastPlayedMapId: MapId | null;
+}
+
 export interface PlayerMeResponse {
   player: PlayerDto;
   /** Best verified score per grade, keyed by grade number. */
   bestScores: Partial<Record<Grade, number>>;
+  /** Counted from finished runs only. */
+  mapStats: PlayerMapStatsDto;
 }
 
 /* ----------------------------------- Runs --------------------------------- */
 
 export interface StartRunRequest {
   grade: Grade;
+  mapId: MapId;
 }
 
 export interface StartRunResponse {
   runId: string;
   grade: Grade;
+  /** The map the server bound to this run; the client must use this one. */
+  mapId: MapId;
+  mapManifestVersion: number;
   seed: number;
   generatorVersion: number;
   totalQuestions: number;
@@ -133,6 +149,8 @@ export interface FinishRunRequest {
 export interface VerifiedRunResult {
   runId: string;
   grade: Grade;
+  /** Taken from the stored run, never from the finish payload. */
+  mapId: MapId;
   score: number;
   correctAnswers: number;
   bestStreak: number;

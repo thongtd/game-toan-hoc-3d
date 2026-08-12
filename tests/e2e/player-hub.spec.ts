@@ -1,6 +1,12 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { answerCurrentQuestion, collectConsoleErrors, ensureProfile, snapshot, startRun } from './helpers.ts';
+import {
+  answerCurrentQuestion,
+  collectConsoleErrors,
+  ensureProfile,
+  snapshot,
+  startRun,
+} from './helpers.ts';
 
 const SCREENSHOT_DIR = 'artifacts/screenshots';
 
@@ -17,10 +23,10 @@ async function skipTutorialOnce(page: Page): Promise<void> {
   await page.evaluate(() => {
     const key = 'math-runner-3d:v1';
     const raw = window.localStorage.getItem(key);
-    const data: Record<string, unknown> =
-      raw === null ? { version: 1 } : (JSON.parse(raw) as Record<string, unknown>);
-    data['version'] = 1;
-    data['tutorialSeen'] = true;
+    const data =
+      raw === null
+        ? { version: 1, tutorialSeen: true }
+        : { ...(JSON.parse(raw) as Record<string, unknown>), version: 1, tutorialSeen: true };
     window.localStorage.setItem(key, JSON.stringify(data));
   });
 }
@@ -143,10 +149,7 @@ test.describe('Sảnh Người Chơi', () => {
 
     await page.goto('/');
     await expect(page.getByTestId('pass-title')).toHaveText(updated, { timeout: 30_000 });
-    await expect(page.getByTestId('pass-avatar')).toHaveAttribute(
-      'src',
-      /vehicle-tank-green-01/,
-    );
+    await expect(page.getByTestId('pass-avatar')).toHaveAttribute('src', /vehicle-tank-green-01/);
   });
 
   test('token hỏng đưa người chơi về luồng tạo mới', async ({ page }) => {

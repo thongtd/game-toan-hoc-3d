@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import {
   answerCurrentQuestion,
   collectConsoleErrors,
+  ensureProfile,
   setTimeScale,
   snapshot,
   startRun,
@@ -16,9 +17,10 @@ test.describe('luồng chơi đầy đủ', () => {
 
     await page.goto('/');
 
-    // 1-2. Loading finishes and home appears.
+    // 1-2. Loading finishes, the profile is created and home appears.
     await expect(page.getByTestId('screen-loading')).toBeHidden({ timeout: 30_000 });
-    await expect(page.getByTestId('screen-home')).toBeVisible();
+    await ensureProfile(page);
+    await expect(page.getByTestId('screen-home')).toBeVisible({ timeout: 30_000 });
     await page.screenshot({ path: `${SCREENSHOT_DIR}/home-desktop.png` });
 
     // 3-5. Grade 1, tutorial, countdown.
@@ -41,7 +43,8 @@ test.describe('luồng chơi đầy đủ', () => {
     const wrong = await answerCurrentQuestion(page, (question) =>
       question.correctIndex === 0 ? 2 : ((question.correctIndex - 1) as 0 | 1 | 2),
     );
-    const expectedAnswer = wrong.before.activeQuestion?.answers[wrong.before.activeQuestion.correctIndex];
+    const expectedAnswer =
+      wrong.before.activeQuestion?.answers[wrong.before.activeQuestion.correctIndex];
     expect(expectedAnswer).toBeDefined();
 
     const banner = page.getByTestId('hud-banner');
@@ -173,6 +176,7 @@ test.describe('luồng chơi đầy đủ', () => {
 
   test('tắt tiếng được lưu lại sau khi tải lại trang', async ({ page }) => {
     await page.goto('/');
+    await ensureProfile(page);
     await expect(page.getByTestId('screen-home')).toBeVisible({ timeout: 30_000 });
 
     await page.getByTestId('btn-mute-home').click();
@@ -212,6 +216,7 @@ test.describe('luồng chơi đầy đủ', () => {
 
   test('modal nguồn tài nguyên mở được và đóng được', async ({ page }) => {
     await page.goto('/');
+    await ensureProfile(page);
     await expect(page.getByTestId('screen-home')).toBeVisible({ timeout: 30_000 });
 
     await page.getByTestId('btn-credits').click();
@@ -249,14 +254,20 @@ test.describe('luồng chơi đầy đủ', () => {
     await expect(page.getByTestId('screen-pause')).toBeVisible();
 
     await page.getByTestId('btn-resume').click();
-    await waitForSnapshot(page, (s) => s.phase !== 'paused', { message: 'resume after tab switch' });
+    await waitForSnapshot(page, (s) => s.phase !== 'paused', {
+      message: 'resume after tab switch',
+    });
   });
 
   test('không có yêu cầu mạng ra ngoài domain của game', async ({ page }) => {
     const external: string[] = [];
     page.on('request', (request) => {
       const url = request.url();
-      if (!url.startsWith('http://127.0.0.1:') && !url.startsWith('data:') && !url.startsWith('blob:')) {
+      if (
+        !url.startsWith('http://127.0.0.1:') &&
+        !url.startsWith('data:') &&
+        !url.startsWith('blob:')
+      ) {
         external.push(url);
       }
     });

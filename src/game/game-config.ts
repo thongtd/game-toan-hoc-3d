@@ -6,35 +6,22 @@ export const GAME_CONFIG = {
   /** Questions in one run. */
   questionsPerRun: 12,
 
-  /** Speed added to the world after each resolved question. */
-  speedIncrementPerQuestion: 0.28,
-
-  /** Distance from the player to the first gate of a run. */
-  firstGateDistance: 48,
-
-  /** Random spacing between consecutive gates. */
-  gateDistanceMin: 45,
-  gateDistanceMax: 55,
-
   /**
-   * A question must stay readable for at least this long before its gate
-   * arrives. Gate spacing is stretched when the world speed would otherwise
-   * make the run too fast to read.
+   * World speed and gate spacing live in `shared/scoring/speed-config.ts`.
+   * They are shared with the server, so they must not be duplicated here.
    */
-  minReadingSeconds: 4.5,
 
   /** Duration of the correct/wrong banner. */
   feedbackMs: 800,
+
+  /** How long the "TĂNG TỐC!" ribbon stays up after crossing a tier. */
+  speedUpBannerMs: 800,
 
   /** Lane change tween duration. */
   laneChangeMs: 220,
 
   /** Ignore repeat lane inputs that arrive faster than this. */
   inputDebounceMs: 80,
-
-  /** After a wrong answer the world briefly eases off. */
-  wrongAnswerSlowdownFactor: 0.85,
-  wrongAnswerSlowdownMs: 500,
 
   /** Largest simulation step; protects against tab-switch time jumps. */
   maxDeltaSeconds: 0.05,
@@ -52,6 +39,11 @@ export const GAME_CONFIG = {
   cameraFov: 52,
   /** Portrait phones need a taller field of view to keep the gates in frame. */
   cameraFovPortrait: 64,
+  /**
+   * Extra field of view at the top speed tier, added gradually.
+   * Small on purpose: enough to feel quick, not enough to distort the gates.
+   */
+  cameraFovSpeedBoost: 6,
   cameraOffset: { x: 0, y: 4.6, z: 7.5 },
   cameraLookAhead: { x: 0, y: 1.2, z: -8 },
 

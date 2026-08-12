@@ -10,6 +10,7 @@ import { JsonStore, JsonStoreCorruptError } from '../src/storage/json-store.ts';
 import { currentSchemaVersion, LATEST_SCHEMA_VERSION } from '../src/storage/migrations.ts';
 import type { NewPlayerRecord, StoredAnswer } from '../src/domain/records.ts';
 import type { Grade } from '../../shared/game-types.ts';
+import type { MapId } from '../../shared/maps/map-manifest.ts';
 
 /**
  * One suite, both drivers.
@@ -147,6 +148,8 @@ for (const driver of DRIVERS) {
         playerId: player.id,
         grade: 3,
         seed: 12345,
+        mapId: 'rainbow-skyway',
+        mapManifestVersion: 1,
         generatorVersion: 1,
         startedAt: '2026-08-12T08:10:00.000Z',
         expiresAt: '2026-08-12T08:20:00.000Z',
@@ -170,6 +173,61 @@ for (const driver of DRIVERS) {
       expect(finished.status).toBe('finished');
       expect(finished.score).toBe(1420);
       expect(finished.answers).toEqual(ANSWERS);
+      // The map is bound at start and survives the finish untouched.
+      expect(run.mapId).toBe('rainbow-skyway');
+      expect(run.mapManifestVersion).toBe(1);
+      expect(finished.mapId).toBe('rainbow-skyway');
+    });
+
+    it('đếm map stats từ các lượt đã hoàn thành, mới nhất trước', async () => {
+      const player = await repository.createPlayer(playerInput());
+
+      const play = async (id: string, mapId: MapId, finishedAt: string): Promise<void> => {
+        await repository.createRunSession({
+          id,
+          playerId: player.id,
+          grade: 1,
+          mapId,
+          mapManifestVersion: 1,
+          seed: 7,
+          generatorVersion: 1,
+          startedAt: '2026-08-12T08:00:00.000Z',
+          expiresAt: '2026-08-12T08:10:00.000Z',
+        });
+        await repository.finishRun({
+          id,
+          status: 'finished',
+          score: 100,
+          correctAnswers: 8,
+          bestStreak: 3,
+          durationMs: 60_000,
+          answers: ANSWERS,
+          rejectionReason: null,
+          finishedAt,
+        });
+      };
+
+      await play('m1', 'toy-city', '2026-08-12T09:00:00.000Z');
+      await play('m2', 'cosmic-orbit', '2026-08-12T10:00:00.000Z');
+      await play('m3', 'toy-city', '2026-08-12T11:00:00.000Z');
+
+      // An open run must not be counted.
+      await repository.createRunSession({
+        id: 'm4',
+        playerId: player.id,
+        grade: 1,
+        mapId: 'enchanted-forest',
+        mapManifestVersion: 1,
+        seed: 8,
+        generatorVersion: 1,
+        startedAt: '2026-08-12T12:00:00.000Z',
+        expiresAt: '2026-08-12T12:10:00.000Z',
+      });
+
+      const stats = await repository.getMapStats(player.id);
+      expect(stats.lastPlayedMapId).toBe('toy-city');
+      expect(stats.recentMapIds).toEqual(['toy-city', 'cosmic-orbit', 'toy-city']);
+      expect(stats.totalPlays).toEqual({ 'toy-city': 2, 'cosmic-orbit': 1 });
     });
 
     it('makes finishing idempotent', async () => {
@@ -179,6 +237,8 @@ for (const driver of DRIVERS) {
         playerId: player.id,
         grade: 2,
         seed: 1,
+        mapId: 'rainbow-skyway',
+        mapManifestVersion: 1,
         generatorVersion: 1,
         startedAt: '2026-08-12T08:10:00.000Z',
         expiresAt: '2026-08-12T08:20:00.000Z',
@@ -219,12 +279,22 @@ for (const driver of DRIVERS) {
         playerId: player.id,
         grade: 1 as Grade,
         seed: 5,
+        mapId: 'rainbow-skyway' as const,
+        mapManifestVersion: 1,
         generatorVersion: 1,
         startedAt: '2026-08-12T08:00:00.000Z',
       };
 
-      await repository.createRunSession({ ...base, id: 'open', expiresAt: '2026-08-12T09:00:00.000Z' });
-      await repository.createRunSession({ ...base, id: 'stale', expiresAt: '2026-08-12T08:01:00.000Z' });
+      await repository.createRunSession({
+        ...base,
+        id: 'open',
+        expiresAt: '2026-08-12T09:00:00.000Z',
+      });
+      await repository.createRunSession({
+        ...base,
+        id: 'stale',
+        expiresAt: '2026-08-12T08:01:00.000Z',
+      });
 
       const now = '2026-08-12T08:30:00.000Z';
       expect(await repository.countOpenRuns(player.id, now)).toBe(1);
@@ -232,9 +302,36 @@ for (const driver of DRIVERS) {
 
     it('reports best score per grade', async () => {
       const player = await repository.createPlayer(playerInput());
-      await finishRunFor(repository, player.id, 'r1', 3, 1000, 8, 100000, '2026-08-12T08:10:00.000Z');
-      await finishRunFor(repository, player.id, 'r2', 3, 1500, 10, 100000, '2026-08-12T08:20:00.000Z');
-      await finishRunFor(repository, player.id, 'r3', 1, 700, 6, 100000, '2026-08-12T08:30:00.000Z');
+      await finishRunFor(
+        repository,
+        player.id,
+        'r1',
+        3,
+        1000,
+        8,
+        100000,
+        '2026-08-12T08:10:00.000Z',
+      );
+      await finishRunFor(
+        repository,
+        player.id,
+        'r2',
+        3,
+        1500,
+        10,
+        100000,
+        '2026-08-12T08:20:00.000Z',
+      );
+      await finishRunFor(
+        repository,
+        player.id,
+        'r3',
+        1,
+        700,
+        6,
+        100000,
+        '2026-08-12T08:30:00.000Z',
+      );
 
       const best = await repository.getBestScores(player.id);
       expect(best[3]).toBe(1500);
@@ -279,8 +376,26 @@ for (const driver of DRIVERS) {
 
     it('filters by weekly period', async () => {
       const player = await repository.createPlayer(playerInput());
-      await finishRunFor(repository, player.id, 'old', 2, 5000, 12, 60000, '2026-08-01T08:00:00.000Z');
-      await finishRunFor(repository, player.id, 'new', 2, 900, 7, 60000, '2026-08-12T08:00:00.000Z');
+      await finishRunFor(
+        repository,
+        player.id,
+        'old',
+        2,
+        5000,
+        12,
+        60000,
+        '2026-08-01T08:00:00.000Z',
+      );
+      await finishRunFor(
+        repository,
+        player.id,
+        'new',
+        2,
+        900,
+        7,
+        60000,
+        '2026-08-12T08:00:00.000Z',
+      );
 
       const weekly = await repository.getLeaderboard({
         grade: 2,
@@ -302,7 +417,16 @@ for (const driver of DRIVERS) {
       const banned = await repository.createPlayer(playerInput({ nickname: 'Banned' }));
 
       await finishRunFor(repository, active.id, 'ok', 5, 500, 5, 90000, '2026-08-12T08:10:00.000Z');
-      await finishRunFor(repository, banned.id, 'no', 5, 9000, 12, 60000, '2026-08-12T08:10:00.000Z');
+      await finishRunFor(
+        repository,
+        banned.id,
+        'no',
+        5,
+        9000,
+        12,
+        60000,
+        '2026-08-12T08:10:00.000Z',
+      );
 
       await repository.updatePlayer(banned.id, {
         status: 'disabled',
@@ -321,6 +445,8 @@ for (const driver of DRIVERS) {
         playerId: player.id,
         grade: 1,
         seed: 3,
+        mapId: 'rainbow-skyway',
+        mapManifestVersion: 1,
         generatorVersion: 1,
         startedAt: '2026-08-12T08:00:00.000Z',
         expiresAt: '2026-08-12T08:10:00.000Z',
@@ -330,6 +456,8 @@ for (const driver of DRIVERS) {
         playerId: player.id,
         grade: 1,
         seed: 4,
+        mapId: 'rainbow-skyway',
+        mapManifestVersion: 1,
         generatorVersion: 1,
         startedAt: '2026-08-12T08:00:00.000Z',
         expiresAt: '2026-08-12T08:10:00.000Z',
@@ -463,9 +591,7 @@ describe('JSON store durability', () => {
     const file = path.join(dir, 'data.json');
     const repository = new JsonGameRepository(file);
 
-    await Promise.all(
-      Array.from({ length: 20 }, () => repository.createPlayer(playerInput())),
-    );
+    await Promise.all(Array.from({ length: 20 }, () => repository.createPlayer(playerInput())));
 
     const raw = JSON.parse(readFileSync(file, 'utf8')) as { players: unknown[] };
     expect(raw.players).toHaveLength(20);
@@ -494,6 +620,8 @@ async function finishRunFor(
     playerId,
     grade,
     seed: 1,
+    mapId: 'rainbow-skyway',
+    mapManifestVersion: 1,
     generatorVersion: 1,
     startedAt: '2026-08-12T08:00:00.000Z',
     expiresAt: '2026-08-12T23:00:00.000Z',

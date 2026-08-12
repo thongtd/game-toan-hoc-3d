@@ -62,6 +62,24 @@ export const MIGRATIONS: readonly Migration[] = [
         ON game_runs(grade, status, finished_at, score DESC);
     `,
   },
+  {
+    version: 2,
+    name: 'add_map_to_game_runs',
+    // Runs recorded before maps existed default to the first map, which is
+    // what the client shows for them too - no run is left without a map.
+    // SQLite cannot add a CHECK constraint here, so the allowed values are
+    // enforced by the shared manifest on the way in.
+    up: `
+      ALTER TABLE game_runs
+        ADD COLUMN map_id TEXT NOT NULL DEFAULT 'rainbow-skyway';
+
+      ALTER TABLE game_runs
+        ADD COLUMN map_manifest_version INTEGER NOT NULL DEFAULT 1;
+
+      CREATE INDEX idx_runs_map_finished
+        ON game_runs(map_id, status, finished_at);
+    `,
+  },
 ];
 
 export const LATEST_SCHEMA_VERSION = MIGRATIONS.reduce(
@@ -91,9 +109,11 @@ export function runMigrations(db: DatabaseSync): number[] {
     db.exec('BEGIN');
     try {
       db.exec(migration.up);
-      db.prepare(
-        'INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)',
-      ).run(migration.version, migration.name, new Date().toISOString());
+      db.prepare('INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)').run(
+        migration.version,
+        migration.name,
+        new Date().toISOString(),
+      );
       db.exec('COMMIT');
       executed.push(migration.version);
     } catch (error) {

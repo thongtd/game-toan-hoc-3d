@@ -5,6 +5,7 @@ import type {
   LeaderboardQuery,
   NewPlayerRecord,
   NewRunSessionRecord,
+  PlayerMapStatsRecord,
   PlayerRankQuery,
   PlayerRecord,
   RankedLeaderboardRow,
@@ -32,6 +33,9 @@ export interface GameRepository {
 
   /** Best score per grade for one player, across all time. */
   getBestScores(playerId: string): Promise<Partial<Record<Grade, number>>>;
+
+  /** Which maps a player has finished runs on, for the smart-random pick. */
+  getMapStats(playerId: string): Promise<PlayerMapStatsRecord>;
 
   getLeaderboard(query: LeaderboardQuery): Promise<RankedLeaderboardRow[]>;
   getPlayerRank(query: PlayerRankQuery): Promise<RankedLeaderboardRow | null>;
@@ -70,8 +74,20 @@ export class RunNotFoundError extends RepositoryError {
  * then the lexicographically smaller run id decide, so two calls never disagree.
  */
 export function compareLeaderboardRows(
-  a: { score: number; correctAnswers: number; durationMs: number; finishedAt: string; runId: string },
-  b: { score: number; correctAnswers: number; durationMs: number; finishedAt: string; runId: string },
+  a: {
+    score: number;
+    correctAnswers: number;
+    durationMs: number;
+    finishedAt: string;
+    runId: string;
+  },
+  b: {
+    score: number;
+    correctAnswers: number;
+    durationMs: number;
+    finishedAt: string;
+    runId: string;
+  },
 ): number {
   if (a.score !== b.score) return b.score - a.score;
   if (a.correctAnswers !== b.correctAnswers) return b.correctAnswers - a.correctAnswers;

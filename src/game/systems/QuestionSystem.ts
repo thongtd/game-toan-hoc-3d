@@ -3,6 +3,7 @@ import { Gate } from '../entities/Gate.ts';
 import { GAME_CONFIG, LANE_POSITIONS_X } from '../game-config.ts';
 import type { LaneIndex, Question } from '../../../shared/game-types.ts';
 import type { QuestionPacing } from '../../../shared/scoring/run-pacing.ts';
+import { SPEED_CONFIG } from '../../../shared/scoring/speed-config.ts';
 
 export interface ResolvedAnswer {
   question: Question;
@@ -36,7 +37,8 @@ export class QuestionSystem {
 
   private readonly gates: Gate[] = [];
   private questions: readonly Question[] = [];
-  private pacing: readonly QuestionPacing[] = [];
+  /** Pacing of the question currently on screen. */
+  private activePacing: QuestionPacing | null = null;
   private index = -1;
   private activeGate: Gate | null = null;
 
@@ -102,44 +104,51 @@ export class QuestionSystem {
    * the server uses when it recomputes the score, so both sides agree on how
    * long the player had for each question.
    */
-  start(questions: readonly Question[], pacing: readonly QuestionPacing[], playerZ: number): void {
+  start(questions: readonly Question[], pacing: QuestionPacing, playerZ: number): void {
     this.recycleAll();
     this.questions = questions;
-    this.pacing = pacing;
     this.index = -1;
     this.clockMs = 0;
     this.previousPlayerZ = playerZ;
-    this.advance(playerZ);
+    this.advance(playerZ, pacing);
   }
 
   /**
    * Shows the next question and places its gate.
+   *
+   * The caller supplies the pacing, because the spacing depends on the score
+   * the player has right now - which only the game session knows.
    * Returns false when there are no questions left.
    */
-  advance(playerZ: number): boolean {
+  advance(playerZ: number, pacing: QuestionPacing): boolean {
     const nextIndex = this.index + 1;
     const question = this.questions[nextIndex];
-    const window = this.pacing[nextIndex];
-    if (question === undefined || window === undefined) return false;
+    if (question === undefined) return false;
 
     const gate = this.takeGate();
     if (gate === null) return false;
 
-    gate.setQuestion(question.answers, question.correctIndex, playerZ - window.distance);
+    gate.setQuestion(question.answers, question.correctIndex, playerZ - pacing.distance);
 
     this.index = nextIndex;
     this.activeGate = gate;
     this.questionShownAt = this.clockMs;
     this.lastLaneChangeAt = this.clockMs;
-    this.currentWindowMs = window.windowMs;
+    this.currentWindowMs = pacing.windowMs;
+    this.activePacing = pacing;
 
     this.callbacks.onQuestionShown(question, nextIndex);
     return true;
   }
 
-  /** World speed while the current question is on screen. */
+  /** True when another question is waiting to be shown. */
+  get hasNextQuestion(): boolean {
+    return this.index + 1 < this.questions.length;
+  }
+
+  /** World speed the current question was paced for. */
   get currentSpeed(): number {
-    return this.pacing[Math.max(0, this.index)]?.speed ?? 8;
+    return this.activePacing?.speed ?? SPEED_CONFIG.baseSpeed;
   }
 
   /** Records that the player moved, which is what the speed bonus measures. */
@@ -220,7 +229,7 @@ export class QuestionSystem {
   reset(): void {
     this.recycleAll();
     this.questions = [];
-    this.pacing = [];
+    this.activePacing = null;
     this.index = -1;
     this.clockMs = 0;
   }

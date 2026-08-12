@@ -1,5 +1,6 @@
 import type { Grade, LaneIndex } from '../../../shared/game-types.ts';
 import type { LeaderboardPeriod } from '../../../shared/contracts/api.ts';
+import type { MapId } from '../../../shared/maps/map-manifest.ts';
 
 /** Storage-level shapes. These mirror the database columns, not the API. */
 
@@ -51,6 +52,9 @@ export interface GameRunRecord {
   id: string;
   playerId: string;
   grade: Grade;
+  /** Locked at start; the finish payload cannot change it. */
+  mapId: MapId;
+  mapManifestVersion: number;
   seed: number;
   generatorVersion: number;
   status: RunStatus;
@@ -69,10 +73,19 @@ export interface NewRunSessionRecord {
   id: string;
   playerId: string;
   grade: Grade;
+  mapId: MapId;
+  mapManifestVersion: number;
   seed: number;
   generatorVersion: number;
   startedAt: string;
   expiresAt: string;
+}
+
+/** How often a player has finished a run on each map. */
+export interface PlayerMapStatsRecord {
+  recentMapIds: MapId[];
+  totalPlays: Partial<Record<MapId, number>>;
+  lastPlayedMapId: MapId | null;
 }
 
 export interface FinishRunRecord {

@@ -426,11 +426,7 @@
   border: 3px solid var(--c-outline);
   border-radius: 15px;
   background:
-    repeating-linear-gradient(
-      90deg,
-      transparent 0 18px,
-      rgba(248, 250, 252, 0.85) 18px 34px
-    ),
+    repeating-linear-gradient(90deg, transparent 0 18px, rgba(248, 250, 252, 0.85) 18px 34px),
     var(--c-road);
   box-shadow:
     0 5px 0 rgba(20, 34, 50, 0.5),
@@ -490,9 +486,11 @@
 
 .home__top {
   display: flex;
+  flex: 0 1 auto;
   flex-direction: column;
   align-items: center;
   gap: 0.35rem;
+  min-height: 0;
   max-height: 30%;
 }
 
@@ -511,7 +509,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.85rem;
+  /* Gaps shrink with the viewport so the Start button always keeps its place. */
+  gap: clamp(0.4rem, 1.4vh, 0.85rem);
+  width: 100%;
+  min-height: 0;
   padding-bottom: 0.25rem;
 }
 
@@ -963,10 +964,47 @@
  * Small screens
  * ------------------------------------------------------------------ */
 
+/*
+ * Short screens - the common case on a phone held upright.
+ *
+ * The home screen carries a logo, a record chip, five grade medals, the map
+ * stand and the Start button. On a 640 px tall phone they do not all fit at
+ * full size, so the decorative parts give up their height in this order:
+ * tagline, logo, medals, map picture. The Start button never shrinks below a
+ * comfortable target and never leaves the screen.
+ */
+@media (max-height: 760px) {
+  .home__tagline {
+    display: none;
+  }
+
+  .logo__line {
+    font-size: clamp(1.5rem, 0.9rem + 3.6vw, 2.4rem);
+  }
+
+  .logo__flag {
+    display: none;
+  }
+
+  .home__best {
+    padding: 0.15rem 0.7rem;
+    font-size: 0.85rem;
+  }
+
+  .medal {
+    width: clamp(46px, 12.5vw, 62px);
+    height: clamp(46px, 12.5vw, 62px);
+  }
+
+  .medal__label {
+    font-size: 0.55rem;
+  }
+}
+
 @media (max-height: 700px) {
   .game-button--huge {
-    min-height: 64px;
-    padding: 10px 30px 8px;
+    min-height: 60px;
+    padding: 8px 26px 6px;
   }
 
   .result__stars {
@@ -979,7 +1017,21 @@
     font-size: 1.3rem;
   }
 
+  .game-button--huge {
+    width: min(100%, 320px);
+  }
+
   .board__text {
     font-size: 1rem;
+  }
+
+  /*
+   * On a narrow phone the map picker row reaches the full width, so the mute
+   * and credits buttons move up beside the logo instead of sitting underneath
+   * the dots.
+   */
+  #screen-home .home__corner {
+    top: calc(0.5rem + var(--safe-top));
+    bottom: auto;
   }
 }

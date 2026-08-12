@@ -1,6 +1,13 @@
 import type { Grade, RunResult } from '../../shared/game-types.ts';
 import { formatScore } from '../../shared/math/format-number.ts';
+import type { MapId } from '../../shared/maps/map-manifest.ts';
+import { getMapDefinition } from '../../shared/maps/map-manifest.ts';
+import { GAME_CONFIG } from '../game/game-config.ts';
+import type { MapSelectionMode } from '../player/map-preference.ts';
+import { resolveAssetUrl } from '../utils/asset-url.ts';
 import { GradeMedals } from './components/GradeMedals.ts';
+import { MapSelector } from './components/MapSelector.ts';
+import { SpeedMeter } from './components/SpeedMeter.ts';
 import {
   createIcon,
   onClick,
@@ -26,6 +33,10 @@ export interface UIIntents {
   togglePause(): void;
   retryLoad(): void;
   hover(): void;
+  /** The player changed the previewed map or switched the roulette. */
+  selectMap(selection: { mode: MapSelectionMode; mapId: MapId }): void;
+  /** Retry after a map or run session failed to start. */
+  retryMap(): void;
 }
 
 export type FeedbackKind = 'correct' | 'wrong';
@@ -51,6 +62,8 @@ const LOADING_MESSAGES = [
  */
 export class UIController {
   readonly screens = new ScreenManager();
+  readonly maps: MapSelector;
+  readonly speedMeter = new SpeedMeter();
 
   private readonly medals: GradeMedals;
 
@@ -97,33 +110,129 @@ export class UIController {
 
   private readonly muteIcons = [requireElement('mute-icon-home'), requireElement('mute-icon-hud')];
 
+  private readonly speedUpBanner = requireElement('speed-up-banner');
+  private readonly mapLoadingThumb = requireElementOfType('map-loading-thumb', HTMLImageElement);
+  private readonly mapLoadingName = requireElement('map-loading-name');
+  private readonly mapLoadingStatus = requireElement('map-loading-status');
+  private readonly mapRetryButton = requireElement('btn-map-retry');
+
   private readonly disposers: (() => void)[] = [];
   private loadingMessageIndex = -1;
+  private speedUpTimer = 0;
 
   constructor(private readonly intents: UIIntents) {
     this.medals = new GradeMedals(requireElement('grade-medals'), (grade) => {
       this.intents.selectGrade(grade);
+    });
+    this.maps = new MapSelector({
+      onChange: (selection) => {
+        this.intents.selectMap(selection);
+      },
+      onPreview: () => {
+        this.intents.hover();
+      },
     });
     this.bind();
   }
 
   private bind(): void {
     const bindings: readonly (readonly [string, () => void])[] = [
-      ['btn-start', () => { this.intents.start(); }],
-      ['btn-ready', () => { this.intents.tutorialReady(); }],
-      ['btn-skip-tutorial', () => { this.intents.skipTutorial(); }],
-      ['btn-resume', () => { this.intents.resume(); }],
-      ['btn-home', () => { this.intents.goHome(); }],
-      ['btn-replay', () => { this.intents.replay(); }],
-      ['btn-change-grade', () => { this.intents.changeGrade(); }],
-      ['btn-mute-home', () => { this.intents.toggleMute(); }],
-      ['btn-mute-hud', () => { this.intents.toggleMute(); }],
-      ['btn-pause', () => { this.intents.togglePause(); }],
-      ['btn-retry', () => { this.intents.retryLoad(); }],
-      ['btn-credits', () => { this.openCredits(); }],
-      ['btn-credits-close', () => { this.closeCredits(); }],
-      ['btn-restart', () => { this.setRestartConfirmVisible(true); }],
-      ['btn-restart-no', () => { this.setRestartConfirmVisible(false); }],
+      [
+        'btn-start',
+        () => {
+          this.intents.start();
+        },
+      ],
+      [
+        'btn-ready',
+        () => {
+          this.intents.tutorialReady();
+        },
+      ],
+      [
+        'btn-skip-tutorial',
+        () => {
+          this.intents.skipTutorial();
+        },
+      ],
+      [
+        'btn-resume',
+        () => {
+          this.intents.resume();
+        },
+      ],
+      [
+        'btn-home',
+        () => {
+          this.intents.goHome();
+        },
+      ],
+      [
+        'btn-replay',
+        () => {
+          this.intents.replay();
+        },
+      ],
+      [
+        'btn-change-grade',
+        () => {
+          this.intents.changeGrade();
+        },
+      ],
+      [
+        'btn-mute-home',
+        () => {
+          this.intents.toggleMute();
+        },
+      ],
+      [
+        'btn-mute-hud',
+        () => {
+          this.intents.toggleMute();
+        },
+      ],
+      [
+        'btn-pause',
+        () => {
+          this.intents.togglePause();
+        },
+      ],
+      [
+        'btn-retry',
+        () => {
+          this.intents.retryLoad();
+        },
+      ],
+      [
+        'btn-map-retry',
+        () => {
+          this.intents.retryMap();
+        },
+      ],
+      [
+        'btn-credits',
+        () => {
+          this.openCredits();
+        },
+      ],
+      [
+        'btn-credits-close',
+        () => {
+          this.closeCredits();
+        },
+      ],
+      [
+        'btn-restart',
+        () => {
+          this.setRestartConfirmVisible(true);
+        },
+      ],
+      [
+        'btn-restart-no',
+        () => {
+          this.setRestartConfirmVisible(false);
+        },
+      ],
       [
         'btn-restart-yes',
         () => {
@@ -171,7 +280,10 @@ export class UIController {
     }
 
     // Step through the flavour lines as real progress passes each third.
-    const index = Math.min(LOADING_MESSAGES.length - 1, Math.floor(clamped * LOADING_MESSAGES.length));
+    const index = Math.min(
+      LOADING_MESSAGES.length - 1,
+      Math.floor(clamped * LOADING_MESSAGES.length),
+    );
     if (index !== this.loadingMessageIndex) {
       this.loadingMessageIndex = index;
       setText(this.loadingStatus, LOADING_MESSAGES[index] ?? LOADING_MESSAGES[0]);
@@ -219,9 +331,7 @@ export class UIController {
     this.medals.setSelected(grade);
     setText(
       this.homeBestText,
-      bestScore > 0
-        ? `Kỷ lục lớp này: ${formatScore(bestScore)}`
-        : 'Cùng lập kỷ lục đầu tiên nào!',
+      bestScore > 0 ? `Kỷ lục lớp này: ${formatScore(bestScore)}` : 'Cùng lập kỷ lục đầu tiên nào!',
     );
   }
 
@@ -241,6 +351,36 @@ export class UIController {
     setHidden(this.skipTutorialButton, true);
     setText(this.tutorialHint, 'Tuyệt vời! Cổng đã mở.');
     this.readyButton.focus();
+  }
+
+  /* ------------------------------- Maps ------------------------------ */
+
+  /** Shows the "getting the track ready" board while a map loads. */
+  showMapLoading(mapId: MapId): void {
+    const definition = getMapDefinition(mapId);
+    this.mapLoadingThumb.src = resolveAssetUrl(definition.thumbnailUrl);
+    this.mapLoadingThumb.alt = '';
+    setText(this.mapLoadingName, definition.displayName);
+    setText(this.mapLoadingStatus, 'Đang chuẩn bị đường đua...');
+    setHidden(this.mapRetryButton, true);
+    this.screens.show('mapLoading');
+  }
+
+  /**
+   * Turns the loading board into an error board.
+   * The run has not started, so the only way on is to try again.
+   */
+  showMapLoadFailed(message: string): void {
+    setText(this.mapLoadingStatus, message);
+    setHidden(this.mapRetryButton, false);
+    this.screens.show('mapLoading');
+  }
+
+  /** Says, kindly, that the scenery fell back to the spare road. */
+  showFallbackNotice(): void {
+    this.showHomeNotice(
+      'Bản đồ đang được sửa đường một chút! Mình sẽ chạy trên đường dự phòng nhé.',
+    );
   }
 
   /* ---------------------------- Countdown ---------------------------- */
@@ -281,6 +421,32 @@ export class UIController {
     this.hudStreak.classList.remove('streak-chip--bump');
     void this.hudStreak.offsetWidth;
     this.hudStreak.classList.add('streak-chip--bump');
+  }
+
+  /**
+   * Celebrates crossing a speed threshold.
+   *
+   * The top tier gets its own wording, once per run, so reaching maximum speed
+   * feels like an achievement rather than another step.
+   */
+  showSpeedUp(tier: number, reachedMax: boolean): void {
+    this.speedMeter.setTier(tier);
+    setText(this.speedUpBanner, reachedMax ? 'TỐC ĐỘ TỐI ĐA!' : 'TĂNG TỐC!');
+    setHidden(this.speedUpBanner, false);
+    this.speedUpBanner.classList.remove('speed-up--pop');
+    void this.speedUpBanner.offsetWidth;
+    this.speedUpBanner.classList.add('speed-up--pop');
+
+    window.clearTimeout(this.speedUpTimer);
+    this.speedUpTimer = window.setTimeout(() => {
+      setHidden(this.speedUpBanner, true);
+    }, GAME_CONFIG.speedUpBannerMs);
+  }
+
+  resetSpeedMeter(): void {
+    this.speedMeter.reset();
+    window.clearTimeout(this.speedUpTimer);
+    setHidden(this.speedUpBanner, true);
   }
 
   showFeedback(kind: FeedbackKind, title: string, detail?: string): void {
@@ -356,7 +522,10 @@ export class UIController {
     this.resultStars.replaceChildren();
     for (let i = 1; i <= 3; i += 1) {
       const earned = i <= stars;
-      const star = createIcon('icon-star', earned ? 'result__star' : 'result__star result__star--empty');
+      const star = createIcon(
+        'icon-star',
+        earned ? 'result__star' : 'result__star result__star--empty',
+      );
       this.resultStars.append(star);
     }
     this.resultStars.setAttribute('aria-label', STAR_LABELS[stars]);
@@ -393,6 +562,8 @@ export class UIController {
   }
 
   dispose(): void {
+    window.clearTimeout(this.speedUpTimer);
+    this.maps.dispose();
     for (const disposer of this.disposers) disposer();
     this.disposers.length = 0;
   }

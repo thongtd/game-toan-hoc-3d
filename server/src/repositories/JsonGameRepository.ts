@@ -5,14 +5,40 @@ import type {
   LeaderboardQuery,
   NewPlayerRecord,
   NewRunSessionRecord,
+  PlayerMapStatsRecord,
   PlayerRankQuery,
   PlayerRecord,
   RankedLeaderboardRow,
   UpdatePlayerRecord,
 } from '../domain/records.ts';
 import type { GameRepository } from './GameRepository.ts';
-import { PlayerNotFoundError, RepositoryError, RunNotFoundError, compareLeaderboardRows } from './GameRepository.ts';
+import {
+  PlayerNotFoundError,
+  RepositoryError,
+  RunNotFoundError,
+  compareLeaderboardRows,
+} from './GameRepository.ts';
 import { JsonStore } from '../storage/json-store.ts';
+import { buildMapStats } from './SqliteGameRepository.ts';
+import {
+  DEFAULT_MAP_ID,
+  MAP_MANIFEST_VERSION,
+  isMapId,
+} from '../../../shared/maps/map-manifest.ts';
+
+/**
+ * Fills in the map of a run written before maps existed.
+ *
+ * Old files are read, never rewritten in place: an unreadable or older file is
+ * upgraded on the way out, so a failed parse can never destroy history.
+ */
+function withMapDefaults(run: GameRunRecord): GameRunRecord {
+  return {
+    ...run,
+    mapId: isMapId(run.mapId) ? run.mapId : DEFAULT_MAP_ID,
+    mapManifestVersion: run.mapManifestVersion ?? MAP_MANIFEST_VERSION,
+  };
+}
 
 /**
  * Fallback storage driver for demos and local development.
@@ -99,6 +125,8 @@ export class JsonGameRepository implements GameRepository {
         id: input.id,
         playerId: input.playerId,
         grade: input.grade,
+        mapId: input.mapId,
+        mapManifestVersion: input.mapManifestVersion,
         seed: input.seed,
         generatorVersion: input.generatorVersion,
         status: 'started',
@@ -119,7 +147,7 @@ export class JsonGameRepository implements GameRepository {
 
   getRunById(id: string): Promise<GameRunRecord | null> {
     const run = this.store.read().runs.find((entry) => entry.id === id);
-    return Promise.resolve(run === undefined ? null : { ...run });
+    return Promise.resolve(run === undefined ? null : withMapDefaults(run));
   }
 
   countOpenRuns(playerId: string, now: string): Promise<number> {
@@ -137,7 +165,7 @@ export class JsonGameRepository implements GameRepository {
       if (run === undefined) throw new RunNotFoundError(input.id);
 
       // Already settled: return it unchanged so finishing is idempotent.
-      if (run.status !== 'started') return { ...run };
+      if (run.status !== 'started') return withMapDefaults(run);
 
       run.status = input.status;
       run.score = input.score;
@@ -148,7 +176,7 @@ export class JsonGameRepository implements GameRepository {
       run.rejectionReason = input.rejectionReason;
       run.finishedAt = input.finishedAt;
 
-      return { ...run };
+      return withMapDefaults(run);
     });
   }
 
@@ -160,6 +188,17 @@ export class JsonGameRepository implements GameRepository {
       if (run.score > previous) result[run.grade] = run.score;
     }
     return Promise.resolve(result);
+  }
+
+  getMapStats(playerId: string): Promise<PlayerMapStatsRecord> {
+    const finished = this.store
+      .read()
+      .runs.filter((run) => run.playerId === playerId && run.status === 'finished')
+      .sort((a, b) => (b.finishedAt ?? '').localeCompare(a.finishedAt ?? ''));
+
+    return Promise.resolve(
+      buildMapStats(finished.map((run) => (run.mapId as string | undefined) ?? '')),
+    );
   }
 
   /* ------------------------------ Leaderboard ----------------------------- */

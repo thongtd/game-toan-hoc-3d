@@ -2,12 +2,15 @@ import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import type { Grade } from '../../../shared/game-types.ts';
+import { DEFAULT_MAP_ID, isMapId } from '../../../shared/maps/map-manifest.ts';
+import { RECENT_MAP_HISTORY } from '../../../shared/maps/smart-random.ts';
 import type {
   FinishRunRecord,
   GameRunRecord,
   LeaderboardQuery,
   NewPlayerRecord,
   NewRunSessionRecord,
+  PlayerMapStatsRecord,
   PlayerRankQuery,
   PlayerRecord,
   RankedLeaderboardRow,
@@ -35,6 +38,8 @@ interface RunRow {
   id: string;
   player_id: string;
   grade: number;
+  map_id: string;
+  map_manifest_version: number;
   seed: number;
   generator_version: number;
   status: string;
@@ -114,15 +119,13 @@ export class SqliteGameRepository implements GameRepository {
 
   getPlayerById(id: string): Promise<PlayerRecord | null> {
     const row = this.db.prepare('SELECT * FROM players WHERE id = ?').get(id) as
-      | PlayerRow
-      | undefined;
+      PlayerRow | undefined;
     return Promise.resolve(row === undefined ? null : toPlayer(row));
   }
 
   getPlayerByTokenHash(tokenHash: string): Promise<PlayerRecord | null> {
     const row = this.db.prepare('SELECT * FROM players WHERE token_hash = ?').get(tokenHash) as
-      | PlayerRow
-      | undefined;
+      PlayerRow | undefined;
     return Promise.resolve(row === undefined ? null : toPlayer(row));
   }
 
@@ -155,7 +158,9 @@ export class SqliteGameRepository implements GameRepository {
     values.push(patch.updatedAt);
     values.push(id);
 
-    const result = this.db.prepare(`UPDATE players SET ${sets.join(', ')} WHERE id = ?`).run(...values);
+    const result = this.db
+      .prepare(`UPDATE players SET ${sets.join(', ')} WHERE id = ?`)
+      .run(...values);
     if (result.changes === 0) {
       throw new PlayerNotFoundError(id);
     }
@@ -179,13 +184,16 @@ export class SqliteGameRepository implements GameRepository {
     this.db
       .prepare(
         `INSERT INTO game_runs
-           (id, player_id, grade, seed, generator_version, status, started_at, expires_at)
-         VALUES (?, ?, ?, ?, ?, 'started', ?, ?)`,
+           (id, player_id, grade, map_id, map_manifest_version, seed,
+            generator_version, status, started_at, expires_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'started', ?, ?)`,
       )
       .run(
         input.id,
         input.playerId,
         input.grade,
+        input.mapId,
+        input.mapManifestVersion,
         input.seed,
         input.generatorVersion,
         input.startedAt,
@@ -196,8 +204,7 @@ export class SqliteGameRepository implements GameRepository {
 
   getRunById(id: string): Promise<GameRunRecord | null> {
     const row = this.db.prepare('SELECT * FROM game_runs WHERE id = ?').get(id) as
-      | RunRow
-      | undefined;
+      RunRow | undefined;
     return Promise.resolve(row === undefined ? null : toRun(row));
   }
 
@@ -268,6 +275,20 @@ export class SqliteGameRepository implements GameRepository {
       result[row.grade as Grade] = row.best;
     }
     return Promise.resolve(result);
+  }
+
+  getMapStats(playerId: string): Promise<PlayerMapStatsRecord> {
+    // Only finished runs count: an abandoned or rejected run must not make the
+    // smart pick think the child has already seen that map.
+    const rows = this.db
+      .prepare(
+        `SELECT map_id, finished_at FROM game_runs
+          WHERE player_id = ? AND status = 'finished'
+          ORDER BY finished_at DESC`,
+      )
+      .all(playerId) as { map_id: string; finished_at: string | null }[];
+
+    return Promise.resolve(buildMapStats(rows.map((row) => row.map_id)));
   }
 
   /* ------------------------------ Leaderboard ----------------------------- */
@@ -378,6 +399,9 @@ function toRun(row: RunRow): GameRunRecord {
     id: row.id,
     playerId: row.player_id,
     grade: row.grade as Grade,
+    // Rows written before maps existed carry the migration default.
+    mapId: isMapId(row.map_id) ? row.map_id : DEFAULT_MAP_ID,
+    mapManifestVersion: row.map_manifest_version,
     seed: row.seed,
     generatorVersion: row.generator_version,
     status: row.status as GameRunRecord['status'],
@@ -391,6 +415,26 @@ function toRun(row: RunRow): GameRunRecord {
     expiresAt: row.expires_at,
     finishedAt: row.finished_at,
   };
+}
+
+/** Folds a newest-first list of played map ids into the stats shape. */
+export function buildMapStats(mapIdsNewestFirst: readonly string[]): PlayerMapStatsRecord {
+  const stats: PlayerMapStatsRecord = {
+    recentMapIds: [],
+    totalPlays: {},
+    lastPlayedMapId: null,
+  };
+
+  for (const raw of mapIdsNewestFirst) {
+    const mapId = isMapId(raw) ? raw : DEFAULT_MAP_ID;
+    if (stats.recentMapIds.length < RECENT_MAP_HISTORY) {
+      stats.recentMapIds.push(mapId);
+    }
+    stats.totalPlays[mapId] = (stats.totalPlays[mapId] ?? 0) + 1;
+    stats.lastPlayedMapId ??= mapId;
+  }
+
+  return stats;
 }
 
 function toRankedRow(row: LeaderboardRow, rank: number): RankedLeaderboardRow {

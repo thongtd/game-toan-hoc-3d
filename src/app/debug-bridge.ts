@@ -1,6 +1,8 @@
 import type { AppPhase } from './app-state.ts';
 import type { GameSnapshot } from '../game/Game.ts';
 import type { LaneIndex, Question, RunResult } from '../../shared/game-types.ts';
+import type { MapId } from '../../shared/maps/map-manifest.ts';
+import { DEFAULT_MAP_ID } from '../../shared/maps/map-manifest.ts';
 
 export interface DebugSnapshot {
   phase: AppPhase;
@@ -9,7 +11,19 @@ export interface DebugSnapshot {
   streak: number;
   questionIndex: number;
   activeQuestion: Question | null;
+  /** World speed this frame, so a test can assert the ceiling holds. */
+  speed: number;
+  speedTier: number;
+  mapId: MapId;
+  /** True when the map's scenery failed and the spare road is in use. */
+  mapFallback: boolean;
   playerX: number;
+}
+
+export interface RenderStats {
+  geometries: number;
+  textures: number;
+  programs: number;
 }
 
 export interface DebugBridge {
@@ -17,6 +31,8 @@ export interface DebugBridge {
   moveToLane(lane: LaneIndex): void;
   setTimeScale(scale: number): void;
   getLastResult(): RunResult | null;
+  /** GPU resource counts, used to prove map swaps do not leak. */
+  getRenderStats(): RenderStats;
 }
 
 declare global {
@@ -31,6 +47,7 @@ export interface DebugSource {
   moveToLane(lane: LaneIndex): void;
   setTimeScale(scale: number): void;
   getLastResult(): RunResult | null;
+  getRenderStats(): RenderStats;
 }
 
 /** True only in a dev server or an explicitly flagged test build. */
@@ -55,6 +72,10 @@ export function installDebugBridge(source: DebugSource): void {
         streak: snapshot?.streak ?? 0,
         questionIndex: snapshot?.questionIndex ?? -1,
         activeQuestion: snapshot?.activeQuestion ?? null,
+        speed: snapshot?.speed ?? 0,
+        speedTier: snapshot?.speedTier ?? 0,
+        mapId: snapshot?.mapId ?? DEFAULT_MAP_ID,
+        mapFallback: snapshot?.mapFallback ?? false,
         playerX: snapshot?.playerX ?? 0,
       };
     },
@@ -66,6 +87,9 @@ export function installDebugBridge(source: DebugSource): void {
     },
     getLastResult(): RunResult | null {
       return source.getLastResult();
+    },
+    getRenderStats(): RenderStats {
+      return source.getRenderStats();
     },
   };
 }

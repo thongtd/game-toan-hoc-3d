@@ -4,6 +4,9 @@ import type {
   PlayerDto,
   UpdatePlayerRequest,
 } from '../../shared/contracts/api.ts';
+import type { MapId } from '../../shared/maps/map-manifest.ts';
+import type { PlayerMapStats } from '../../shared/maps/smart-random.ts';
+import { emptyMapStats, recordMapPlay } from '../../shared/maps/smart-random.ts';
 import { type ApiClient, ApiRequestError } from '../api/ApiClient.ts';
 import { playersApi } from '../api/game-api.ts';
 import { PlayerStorage } from './player-storage.ts';
@@ -20,6 +23,8 @@ export class PlayerSession {
 
   private profile: PlayerDto | null = null;
   private bestScores: Partial<Record<Grade, number>> = {};
+  /** Null until the server has answered; the caller then falls back to cache. */
+  private maps: PlayerMapStats | null = null;
 
   constructor(private readonly client: ApiClient) {
     this.client.setToken(this.storage.getToken());
@@ -43,6 +48,17 @@ export class PlayerSession {
     return { ...this.bestScores };
   }
 
+  /** Server-counted map history, or null when it has not arrived yet. */
+  get mapStats(): PlayerMapStats | null {
+    return this.maps;
+  }
+
+  /** Folds a finished run in so the next smart pick is already up to date. */
+  noteMapPlayed(mapId: MapId): PlayerMapStats {
+    this.maps = recordMapPlay(this.maps ?? emptyMapStats(), mapId);
+    return this.maps;
+  }
+
   /**
    * Loads the profile behind the stored token.
    * Returns null when there is no token or the token is no longer valid.
@@ -54,6 +70,7 @@ export class PlayerSession {
       const response = await playersApi.me(this.client);
       this.profile = response.player;
       this.bestScores = response.bestScores;
+      this.maps = response.mapStats;
       this.storage.setCachedProfile(response.player);
       return response.player;
     } catch (error) {
@@ -96,5 +113,6 @@ export class PlayerSession {
     this.client.setToken(null);
     this.profile = null;
     this.bestScores = {};
+    this.maps = null;
   }
 }

@@ -19,6 +19,8 @@
     "test:contract": "vitest run server/tests/repository-contract.test.ts",
     "test:api": "vitest run server/tests/api.test.ts",
     "test:e2e": "playwright test",
+    "assets:validate": "node scripts/validate-assets.mjs",
+    "assets:thumbnails": "node scripts/capture-map-thumbnails.mjs",
     "server:dev": "node --watch server/src/index.ts",
     "server:start": "node server/src/index.ts",
     "server:build": "tsc -p server/tsconfig.json",

@@ -1,11 +1,14 @@
-import type { Grade } from '../../../shared/game-types.ts';
 import type {
   CreatePlayerRequest,
   CreatePlayerResponse,
   PlayerDto,
+  PlayerMeResponse,
   UpdatePlayerRequest,
 } from '../../../shared/contracts/api.ts';
-import { validateNickname, normaliseNicknameForSearch } from '../../../shared/validation/nickname.ts';
+import {
+  validateNickname,
+  normaliseNicknameForSearch,
+} from '../../../shared/validation/nickname.ts';
 import { validateAge, validateAvatarId } from '../../../shared/validation/profile.ts';
 import type { PlayerRecord } from '../domain/records.ts';
 import type { GameRepository } from '../repositories/GameRepository.ts';
@@ -66,9 +69,14 @@ export class PlayerService {
     return player;
   }
 
-  async me(player: PlayerRecord): Promise<{ player: PlayerDto; bestScores: Partial<Record<Grade, number>> }> {
-    const bestScores = await this.repository.getBestScores(player.id);
-    return { player: toDto(player), bestScores };
+  async me(player: PlayerRecord): Promise<PlayerMeResponse> {
+    // Both are read together so the hub can render the profile and pick the
+    // next map without a second round trip.
+    const [bestScores, mapStats] = await Promise.all([
+      this.repository.getBestScores(player.id),
+      this.repository.getMapStats(player.id),
+    ]);
+    return { player: toDto(player), bestScores, mapStats };
   }
 
   async update(player: PlayerRecord, input: unknown): Promise<PlayerDto> {

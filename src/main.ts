@@ -2,6 +2,7 @@ import './styles/base.css';
 import './styles/ui.css';
 import './styles/game.css';
 import './styles/hub.css';
+import './styles/maps.css';
 
 import { App } from './app/App.ts';
 import { isDebugEnabled } from './app/debug-bridge.ts';

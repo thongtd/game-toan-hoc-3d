@@ -8,6 +8,8 @@ import type { AppHandles } from '../src/app.ts';
 import { loadConfig } from '../src/config.ts';
 import { SqliteGameRepository } from '../src/repositories/SqliteGameRepository.ts';
 import type { Grade } from '../../shared/game-types.ts';
+import type { MapId } from '../../shared/maps/map-manifest.ts';
+import { MAP_IDS } from '../../shared/maps/map-manifest.ts';
 import { generateQuestions } from '../../shared/math/question-generator.ts';
 import { QUESTIONS_PER_RUN } from '../../shared/contracts/api.ts';
 import type {
@@ -74,7 +76,8 @@ async function call(pathname: string, options: CallOptions = {}): Promise<ApiCal
   }
 
   const init: RequestInit = { method: options.method ?? 'GET', headers };
-  const body = options.rawBody ?? (options.body === undefined ? undefined : JSON.stringify(options.body));
+  const body =
+    options.rawBody ?? (options.body === undefined ? undefined : JSON.stringify(options.body));
   if (body !== undefined) init.body = body;
 
   const response = await fetch(`${baseUrl}${pathname}`, init);
@@ -109,10 +112,15 @@ async function createPlayer(nickname = 'Gấu Mập'): Promise<CreatePlayerRespo
 async function playRun(
   token: string,
   grade: Grade,
-  options: { correctCount?: number; responseMs?: number } = {},
+  options: { correctCount?: number; responseMs?: number; mapId?: MapId } = {},
 ): Promise<FinishRunResponse> {
-  const started = (await call('/runs/start', { method: 'POST', token, body: { grade } }))
-    .json as StartRunResponse;
+  const started = (
+    await call('/runs/start', {
+      method: 'POST',
+      token,
+      body: { grade, mapId: options.mapId ?? 'rainbow-skyway' },
+    })
+  ).json as StartRunResponse;
 
   const questions = generateQuestions({
     grade,
@@ -124,7 +132,9 @@ async function playRun(
   const answers = questions.map((question, index) => ({
     questionIndex: index,
     selectedIndex:
-      index < correctCount ? question.correctIndex : ((question.correctIndex + 1) % 3 as 0 | 1 | 2),
+      index < correctCount
+        ? question.correctIndex
+        : (((question.correctIndex + 1) % 3) as 0 | 1 | 2),
     responseMs: options.responseMs ?? 3000,
   }));
 
@@ -293,7 +303,11 @@ describe('runs', () => {
   it('ignores any score the client tries to send', async () => {
     const created = await createPlayer();
     const started = (
-      await call('/runs/start', { method: 'POST', token: created.playerToken, body: { grade: 1 } })
+      await call('/runs/start', {
+        method: 'POST',
+        token: created.playerToken,
+        body: { grade: 1, mapId: 'rainbow-skyway' },
+      })
     ).json as StartRunResponse;
 
     const questions = generateQuestions({ grade: 1, seed: started.seed, count: 12 });
@@ -319,7 +333,11 @@ describe('runs', () => {
   it('is idempotent when finished twice', async () => {
     const created = await createPlayer();
     const started = (
-      await call('/runs/start', { method: 'POST', token: created.playerToken, body: { grade: 2 } })
+      await call('/runs/start', {
+        method: 'POST',
+        token: created.playerToken,
+        body: { grade: 2, mapId: 'rainbow-skyway' },
+      })
     ).json as StartRunResponse;
 
     const questions = generateQuestions({ grade: 2, seed: started.seed, count: 12 });
@@ -352,7 +370,11 @@ describe('runs', () => {
     const other = await createPlayer('Người Khác');
 
     const started = (
-      await call('/runs/start', { method: 'POST', token: owner.playerToken, body: { grade: 1 } })
+      await call('/runs/start', {
+        method: 'POST',
+        token: owner.playerToken,
+        body: { grade: 1, mapId: 'rainbow-skyway' },
+      })
     ).json as StartRunResponse;
 
     const response = await call(`/runs/${started.runId}/finish`, {
@@ -368,7 +390,11 @@ describe('runs', () => {
   it('rejects a payload with the wrong number of answers', async () => {
     const created = await createPlayer();
     const started = (
-      await call('/runs/start', { method: 'POST', token: created.playerToken, body: { grade: 1 } })
+      await call('/runs/start', {
+        method: 'POST',
+        token: created.playerToken,
+        body: { grade: 1, mapId: 'rainbow-skyway' },
+      })
     ).json as StartRunResponse;
 
     await new Promise((resolve) => setTimeout(resolve, 5100));
@@ -388,7 +414,11 @@ describe('runs', () => {
   it('rejects an implausibly fast run', async () => {
     const created = await createPlayer();
     const started = (
-      await call('/runs/start', { method: 'POST', token: created.playerToken, body: { grade: 1 } })
+      await call('/runs/start', {
+        method: 'POST',
+        token: created.playerToken,
+        body: { grade: 1, mapId: 'rainbow-skyway' },
+      })
     ).json as StartRunResponse;
 
     const questions = generateQuestions({ grade: 1, seed: started.seed, count: 12 });
@@ -413,11 +443,107 @@ describe('runs', () => {
     const response = await call('/runs/start', {
       method: 'POST',
       token: created.playerToken,
-      body: { grade: 9 },
+      body: { grade: 9, mapId: 'rainbow-skyway' },
     });
     expect(response.status).toBe(400);
     expect(apiError(response.json).field).toBe('grade');
   });
+});
+
+describe('bản đồ của một lượt chơi', () => {
+  it('chấp nhận đủ năm bản đồ và trả lại đúng bản đồ đã lưu', async () => {
+    for (const [index, mapId] of MAP_IDS.entries()) {
+      // A player of their own each time: three open runs is the per-player cap.
+      const created = await createPlayer(`Tay Đua ${String(index)}`);
+      const response = await call('/runs/start', {
+        method: 'POST',
+        token: created.playerToken,
+        body: { grade: 1, mapId },
+      });
+
+      expect(response.status, JSON.stringify(response.json)).toBe(201);
+      const started = response.json as StartRunResponse;
+      expect(started.mapId).toBe(mapId);
+      expect(started.mapManifestVersion).toBe(1);
+    }
+  });
+
+  it('từ chối bản đồ lạ, rỗng, sai kiểu hoặc thiếu', async () => {
+    const created = await createPlayer();
+
+    for (const mapId of ['mars-highway', '', 42, null, undefined]) {
+      const response = await call('/runs/start', {
+        method: 'POST',
+        token: created.playerToken,
+        body: mapId === undefined ? { grade: 1 } : { grade: 1, mapId },
+      });
+
+      expect(response.status, `mapId=${String(mapId)}`).toBe(400);
+      expect(apiError(response.json).code).toBe('MAP_NOT_AVAILABLE');
+      expect(apiError(response.json).field).toBe('mapId');
+    }
+  });
+
+  it('kết quả lấy bản đồ từ lượt chơi đã lưu, không tin payload finish', async () => {
+    const created = await createPlayer();
+    const started = (
+      await call('/runs/start', {
+        method: 'POST',
+        token: created.playerToken,
+        body: { grade: 1, mapId: 'cosmic-orbit' },
+      })
+    ).json as StartRunResponse;
+
+    const questions = generateQuestions({ grade: 1, seed: started.seed, count: 12 });
+    const answers = questions.map((question, index) => ({
+      questionIndex: index,
+      selectedIndex: question.correctIndex,
+      responseMs: 2500,
+    }));
+
+    await new Promise((resolve) => setTimeout(resolve, 5100));
+    const finished = await call(`/runs/${started.runId}/finish`, {
+      method: 'POST',
+      token: created.playerToken,
+      // A client trying to rewrite the map on the way out.
+      body: { clientDurationMs: 5200, answers, mapId: 'toy-city' },
+    });
+
+    expect(finished.status).toBe(200);
+    expect((finished.json as FinishRunResponse).result.mapId).toBe('cosmic-orbit');
+  }, 20000);
+
+  it('bản đồ không làm thay đổi điểm với cùng seed và câu trả lời', async () => {
+    const first = await createPlayer('Tay Đua A');
+    const second = await createPlayer('Tay Đua B');
+
+    const runA = await playRun(first.playerToken, 2, { mapId: 'rainbow-skyway' });
+    const runB = await playRun(second.playerToken, 2, { mapId: 'enchanted-forest' });
+
+    // Different seeds mean different questions, so compare what the map may
+    // never touch: both runs answered everything correctly at the same pace.
+    expect(runA.result.correctAnswers).toBe(runB.result.correctAnswers);
+    expect(runA.result.stars).toBe(runB.result.stars);
+    expect(Math.abs(runA.result.score - runB.result.score)).toBeLessThanOrEqual(60);
+  }, 30000);
+
+  it('mapStats chỉ tính lượt đã hoàn thành', async () => {
+    const created = await createPlayer();
+
+    // One finished run, plus one that is started and left open.
+    await playRun(created.playerToken, 1, { mapId: 'toy-city' });
+    await call('/runs/start', {
+      method: 'POST',
+      token: created.playerToken,
+      body: { grade: 1, mapId: 'vietnam-countryside' },
+    });
+
+    const me = (await call('/players/me', { token: created.playerToken })).json as PlayerMeResponse;
+
+    expect(me.mapStats.lastPlayedMapId).toBe('toy-city');
+    expect(me.mapStats.recentMapIds).toEqual(['toy-city']);
+    expect(me.mapStats.totalPlays).toEqual({ 'toy-city': 1 });
+  }, 30000);
 });
 
 describe('GET /leaderboard', () => {
@@ -469,8 +595,12 @@ describe('GET /leaderboard', () => {
     const created = await createPlayer();
     await playRun(created.playerToken, 2);
 
-    expect(((await call('/leaderboard?grade=2')).json as LeaderboardResponse).entries).toHaveLength(1);
-    expect(((await call('/leaderboard?grade=3')).json as LeaderboardResponse).entries).toHaveLength(0);
+    expect(((await call('/leaderboard?grade=2')).json as LeaderboardResponse).entries).toHaveLength(
+      1,
+    );
+    expect(((await call('/leaderboard?grade=3')).json as LeaderboardResponse).entries).toHaveLength(
+      0,
+    );
   }, 20000);
 });
 
@@ -499,7 +629,9 @@ describe('rate limiting', () => {
       PLAYER_TOKEN_PEPPER: 'test-pepper-value-that-is-long-enough-32',
     });
 
-    app = createApp(config, new SqliteGameRepository(config.sqlitePath), { rateLimitEnabled: true });
+    app = createApp(config, new SqliteGameRepository(config.sqlitePath), {
+      rateLimitEnabled: true,
+    });
     await new Promise<void>((resolve) => {
       app.server.listen(0, '127.0.0.1', resolve);
     });

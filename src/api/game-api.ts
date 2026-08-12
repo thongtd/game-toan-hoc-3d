@@ -11,6 +11,7 @@ import type {
   StartRunResponse,
   UpdatePlayerRequest,
 } from '../../shared/contracts/api.ts';
+import type { MapId } from '../../shared/maps/map-manifest.ts';
 import type { ApiClient } from './ApiClient.ts';
 
 /** Typed calls for each endpoint, grouped by resource. */
@@ -24,14 +25,21 @@ export const playersApi = {
     return client.request('/players/me', { auth: 'required' });
   },
 
-  update(client: ApiClient, body: UpdatePlayerRequest): Promise<{ player: PlayerMeResponse['player'] }> {
+  update(
+    client: ApiClient,
+    body: UpdatePlayerRequest,
+  ): Promise<{ player: PlayerMeResponse['player'] }> {
     return client.request('/players/me', { method: 'PATCH', body, auth: 'required' });
   },
 };
 
 export const runsApi = {
-  start(client: ApiClient, grade: Grade): Promise<StartRunResponse> {
-    return client.request('/runs/start', { method: 'POST', body: { grade }, auth: 'required' });
+  start(client: ApiClient, grade: Grade, mapId: MapId): Promise<StartRunResponse> {
+    return client.request('/runs/start', {
+      method: 'POST',
+      body: { grade, mapId },
+      auth: 'required',
+    });
   },
 
   /**

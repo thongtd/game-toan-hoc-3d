@@ -7,6 +7,7 @@ import type {
   VerifiedRunResult,
 } from '../../../shared/contracts/api.ts';
 import { GENERATOR_VERSION, QUESTIONS_PER_RUN, RUN_TTL_MS } from '../../../shared/contracts/api.ts';
+import { MAP_MANIFEST_VERSION, isMapAvailable } from '../../../shared/maps/map-manifest.ts';
 import { verifyRun } from '../../../shared/scoring/verify-run.ts';
 import type { GameRunRecord, PlayerRecord } from '../domain/records.ts';
 import type { GameRepository } from '../repositories/GameRepository.ts';
@@ -40,6 +41,16 @@ export class RunService {
       throw badRequest('VALIDATION_FAILED', 'Lớp phải là số từ 1 đến 5.', 'grade');
     }
 
+    // The map is whitelisted against the shared manifest: a client cannot
+    // invent one, and a map switched off in this release is refused outright.
+    if (!isMapAvailable(body.mapId)) {
+      throw badRequest(
+        'MAP_NOT_AVAILABLE',
+        'Bản đồ này hiện chưa chơi được, bạn chọn bản đồ khác nhé!',
+        'mapId',
+      );
+    }
+
     const now = new Date();
     const open = await this.repository.countOpenRuns(player.id, now.toISOString());
     if (open >= MAX_OPEN_RUNS) {
@@ -57,6 +68,8 @@ export class RunService {
       id: newRunId(),
       playerId: player.id,
       grade: body.grade,
+      mapId: body.mapId,
+      mapManifestVersion: MAP_MANIFEST_VERSION,
       seed: generateSeed(),
       generatorVersion: GENERATOR_VERSION,
       startedAt,
@@ -66,6 +79,9 @@ export class RunService {
     return {
       runId: run.id,
       grade: run.grade,
+      // Echoed from the stored run, so the client renders what was recorded.
+      mapId: run.mapId,
+      mapManifestVersion: run.mapManifestVersion,
       seed: run.seed,
       generatorVersion: run.generatorVersion,
       totalQuestions: QUESTIONS_PER_RUN,
@@ -147,11 +163,7 @@ export class RunService {
     });
   }
 
-  private async reject(
-    run: GameRunRecord,
-    reason: string,
-    finishedAt: string,
-  ): Promise<void> {
+  private async reject(run: GameRunRecord, reason: string, finishedAt: string): Promise<void> {
     await this.repository.finishRun({
       id: run.id,
       status: 'rejected',
@@ -175,6 +187,8 @@ export class RunService {
     return {
       runId: run.id,
       grade: run.grade,
+      // Always the map stored at start: the finish payload has no say in it.
+      mapId: run.mapId,
       score: run.score ?? 0,
       correctAnswers: run.correctAnswers ?? 0,
       bestStreak: run.bestStreak ?? 0,

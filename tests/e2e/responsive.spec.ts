@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { answerCurrentQuestion, snapshot, startRun } from './helpers.ts';
+import { answerCurrentQuestion, ensureProfile, snapshot, startRun } from './helpers.ts';
 
 const SCREENSHOT_DIR = 'artifacts/screenshots';
 
@@ -16,7 +16,9 @@ const MIN_TOUCH_TARGET = 56;
 async function hasHorizontalOverflow(page: Page): Promise<boolean> {
   return page.evaluate(() => {
     const root = document.documentElement;
-    return root.scrollWidth > root.clientWidth + 1 || document.body.scrollWidth > root.clientWidth + 1;
+    return (
+      root.scrollWidth > root.clientWidth + 1 || document.body.scrollWidth > root.clientWidth + 1
+    );
   });
 }
 
@@ -27,6 +29,7 @@ test.describe('bố cục đáp ứng', () => {
     }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.goto('/');
+      await ensureProfile(page);
       await expect(page.getByTestId('screen-home')).toBeVisible({ timeout: 30_000 });
 
       expect(await hasHorizontalOverflow(page)).toBe(false);
@@ -118,6 +121,7 @@ test.describe('bố cục đáp ứng', () => {
   test('vùng canvas khoá cuộn trang khi chạm', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
+    await ensureProfile(page);
     await expect(page.getByTestId('screen-home')).toBeVisible({ timeout: 30_000 });
 
     const touchAction = await page

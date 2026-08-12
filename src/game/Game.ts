@@ -17,11 +17,17 @@ import { StageSystem } from './systems/StageSystem.ts';
 import type { StageMode } from './systems/StageSystem.ts';
 import { WorldRecycleSystem } from './systems/WorldRecycleSystem.ts';
 import { ScoreTracker, computeStars } from '../../shared/scoring/scoring.ts';
-import { computeRunPacing } from '../../shared/scoring/run-pacing.ts';
+import { pacingForQuestion } from '../../shared/scoring/run-pacing.ts';
+import { SPEED_CONFIG } from '../../shared/scoring/speed-config.ts';
+import { SpeedSystem } from './speed/SpeedSystem.ts';
+import type { SpeedTierChange } from './speed/SpeedSystem.ts';
+import { MapManager } from './maps/MapManager.ts';
+import type { MapLoadResult } from './maps/MapManager.ts';
+import type { MapId } from '../../shared/maps/map-manifest.ts';
+import { DEFAULT_MAP_ID } from '../../shared/maps/map-manifest.ts';
 import { GAME_CONFIG } from './game-config.ts';
 import type { Grade, LaneIndex, Question, RunResult } from '../../shared/game-types.ts';
 import type { RunAnswerInput } from '../../shared/contracts/api.ts';
-import { getGradeConfig } from '../../shared/content/grade-config.ts';
 import type { LaneDirection } from './systems/InputSystem.ts';
 
 export interface AnswerFeedback {
@@ -41,6 +47,8 @@ export interface GameCallbacks {
   onFinished(result: Omit<RunResult, 'isNewBest'>): void;
   onQualityChanged(quality: QualitySettings, measuredFps: number): void;
   onLaneChanged(lane: LaneIndex): void;
+  /** Raised when the score crosses a speed threshold. */
+  onSpeedTierChanged(change: SpeedTierChange): void;
 }
 
 export interface GameSnapshot {
@@ -50,9 +58,18 @@ export interface GameSnapshot {
   questionIndex: number;
   activeQuestion: Question | null;
   speed: number;
+  /** Speed tier 0..5 currently reached. */
+  speedTier: number;
+  /** Map the run is being played on. */
+  mapId: MapId;
+  /** True when the scenery fell back to the code-only scene. */
+  mapFallback: boolean;
   /** World X of the runner; used by tests to verify lane alignment. */
   playerX: number;
 }
+
+/** The tutorial jogs along below the slowest real speed; nothing is scored. */
+const TUTORIAL_SPEED = SPEED_CONFIG.baseSpeed * 0.7;
 
 /** Sample answers shown on the attract-mode gate; never scored. */
 const SHOWCASE_ANSWERS: [string, string, string] = ['7', '12', '9'];
@@ -81,6 +98,9 @@ export class Game {
   private readonly score = new ScoreTracker();
   private readonly fpsProbe = new FpsProbe(5);
   private readonly tempVector = new THREE.Vector3();
+  private readonly speedSystem = new SpeedSystem();
+  private readonly clouds: THREE.Group;
+  private readonly maps: MapManager;
 
   private quality: QualitySettings;
   private reducedMotion = prefersReducedMotion();
@@ -88,7 +108,9 @@ export class Game {
   private stageMode: StageMode = 'attract';
   private grade: Grade = 1;
   private seed = 0;
-  private currentSpeed = 8;
+  private mapId: MapId = DEFAULT_MAP_ID;
+  private currentSpeed: number = SPEED_CONFIG.baseSpeed;
+  private baseFov: number = GAME_CONFIG.cameraFov;
   private runDurationMs = 0;
   /** What the player chose, in the shape the server verifies. */
   private readonly runAnswers: RunAnswerInput[] = [];
@@ -112,7 +134,9 @@ export class Game {
 
     this.lights = createLights(quality);
     this.scene.add(this.lights.hemisphere, this.lights.sun, this.lights.sunTarget);
-    this.scene.add(createClouds());
+
+    this.clouds = createClouds();
+    this.scene.add(this.clouds);
 
     this.track = new Track();
     this.scene.add(this.track.group);
@@ -140,6 +164,13 @@ export class Game {
       },
     });
     this.scene.add(this.questionSystem.group);
+
+    this.maps = new MapManager({
+      scene: this.scene,
+      lights: this.lights,
+      track: this.track,
+      clouds: this.clouds,
+    });
 
     this.cameraSystem = new CameraSystem(this.camera);
     this.cameraSystem.setReducedMotion(this.reducedMotion);
@@ -200,6 +231,42 @@ export class Game {
     this.player.setReducedMotion(reduced);
     this.particles.setReducedMotion(reduced);
     this.cameraSystem.setReducedMotion(reduced);
+    this.maps.setReducedMotion(reduced);
+  }
+
+  /* -------------------------------- Maps -------------------------------- */
+
+  /**
+   * Swaps in the scenery for one map.
+   *
+   * The run must not start until this resolves: a countdown over a half-built
+   * world would eat into the first question's reading time.
+   */
+  async loadMap(mapId: MapId, seed: number): Promise<MapLoadResult> {
+    this.mapId = mapId;
+    return this.maps.load(mapId, {
+      seed,
+      quality: this.quality,
+      reducedMotion: this.reducedMotion,
+    });
+  }
+
+  get activeMapId(): MapId | null {
+    return this.maps.activeMapId;
+  }
+
+  /**
+   * What the GPU is currently holding.
+   *
+   * Exposed for the leak test: swapping maps must not leave geometries or
+   * textures behind, and the only way to prove that is to count them.
+   */
+  get renderStats(): { geometries: number; textures: number; programs: number } {
+    return {
+      geometries: this.renderer.info.memory.geometries,
+      textures: this.renderer.info.memory.textures,
+      programs: this.renderer.info.programs?.length ?? 0,
+    };
   }
 
   /* ------------------------------ Run state ----------------------------- */
@@ -208,33 +275,37 @@ export class Game {
   prepareRun(grade: Grade, seed: number, questions: readonly Question[]): void {
     this.grade = grade;
     this.seed = seed;
-    this.currentSpeed = getGradeConfig(grade).baseSpeed;
     this.runDurationMs = 0;
     this.runAnswers.length = 0;
     this.pendingFinish = false;
     this.runActive = false;
 
     this.score.reset();
+    this.speedSystem.reset();
     this.feedback.reset();
     this.particles.clear();
     this.track.reset();
     this.player.reset();
     this.decorations.reset(seed ^ 0x1f2e3d4c);
 
-    // The pacing table is shared with the server, so the gate spacing the
-    // player sees is exactly the timing their score is judged against.
-    const pacing = computeRunPacing(grade, seed, questions.length);
+    // Pacing comes from the shared module the server verifies with, so the
+    // gate spacing the player sees is exactly the timing they are judged on.
+    this.currentSpeed = SPEED_CONFIG.baseSpeed;
+    const pacing = pacingForQuestion(grade, 0, 0, this.currentSpeed);
     this.questionSystem.start(questions, pacing, this.player.position.z);
-    this.currentSpeed = this.questionSystem.currentSpeed;
     this.fpsProbe.reset();
     this.measureFps = false;
   }
 
-  /** Runs the world for the tutorial without any questions in play. */
-  prepareTutorial(grade: Grade): void {
+  /**
+   * Runs the world for the tutorial without any questions in play.
+   * The grade is irrelevant here: every grade shares one speed curve.
+   */
+  prepareTutorial(): void {
     // A gentle jog: fast enough to feel like the real thing, slow enough to
     // practise a lane change without pressure.
-    this.currentSpeed = getGradeConfig(grade).baseSpeed * 0.7;
+    this.speedSystem.reset();
+    this.currentSpeed = TUTORIAL_SPEED;
     this.player.reset();
     this.track.reset();
     this.questionSystem.reset();
@@ -288,6 +359,9 @@ export class Game {
       questionIndex: this.questionSystem.questionIndex,
       activeQuestion: this.questionSystem.activeQuestion,
       speed: this.currentSpeed,
+      speedTier: this.speedSystem.tier,
+      mapId: this.mapId,
+      mapFallback: this.maps.isShowingFallback,
       playerX: this.player.position.x,
     };
   }
@@ -302,17 +376,25 @@ export class Game {
     const worldMoving =
       !paused && this.runActive && (this.stageMode === 'running' || this.stageMode === 'tutorial');
 
+    // Pausing feeds the ramp a zero step: the transition holds where it was
+    // instead of jumping forward by the length of the pause.
+    if (this.stageMode === 'running') {
+      this.currentSpeed = this.speedSystem.update(paused ? 0 : delta);
+    }
+
     if (worldMoving) {
-      const speed = this.currentSpeed * this.feedback.speedMultiplier;
+      const speed = this.stageMode === 'tutorial' ? TUTORIAL_SPEED : this.currentSpeed;
       this.player.update(delta, speed);
       this.track.update(this.player.position.z);
       this.decorations.update(this.player.position.z);
+      this.maps.update(delta, speed, this.player.position.z);
 
       if (this.stageMode === 'running') {
         this.runDurationMs += delta * 1000;
         this.questionSystem.update(delta, this.player.position);
         this.feedback.update(delta);
         this.probeFps(delta);
+        this.updateSpeedFov();
       }
 
       this.cameraSystem.update(delta, this.player.position, speed);
@@ -320,6 +402,7 @@ export class Game {
       // The world holds still, but the character keeps animating and the
       // camera keeps easing towards its pose - the scene is never frozen.
       this.player.update(delta, 0);
+      this.maps.update(delta, 0, this.player.position.z);
       this.cameraSystem.update(delta, this.player.position, 0);
     }
 
@@ -330,6 +413,23 @@ export class Game {
     if (this.stageMode === 'result' && !paused) {
       this.updateCelebration(delta);
     }
+  }
+
+  /**
+   * Widens the field of view slightly as the tiers climb.
+   *
+   * Six degrees across the whole run: enough to read as speed, small enough
+   * that the answer gates keep their shape. Switched off entirely for players
+   * who asked for reduced motion.
+   */
+  private updateSpeedFov(): void {
+    const boost = this.reducedMotion
+      ? 0
+      : (this.speedSystem.tier / SPEED_CONFIG.maxTierIndex) * GAME_CONFIG.cameraFovSpeedBoost;
+    const target = this.baseFov + boost;
+    if (Math.abs(this.camera.fov - target) < 0.01) return;
+    this.camera.fov = target;
+    this.camera.updateProjectionMatrix();
   }
 
   render(): void {
@@ -343,9 +443,11 @@ export class Game {
     // pulled-back camera, otherwise the runner fills the screen and the gates
     // are cropped off the sides.
     const portrait = width / Math.max(1, height) < 0.85;
-    this.camera.fov = portrait ? GAME_CONFIG.cameraFovPortrait : GAME_CONFIG.cameraFov;
+    this.baseFov = portrait ? GAME_CONFIG.cameraFovPortrait : GAME_CONFIG.cameraFov;
+    this.camera.fov = this.baseFov;
     this.camera.updateProjectionMatrix();
     this.cameraSystem.setPortrait(portrait);
+    this.updateSpeedFov();
   }
 
   /** Coins keep popping out of the chest for a couple of seconds. */
@@ -369,6 +471,7 @@ export class Game {
     this.quality = QUALITY_PRESETS.low;
     applyQuality(this.renderer, this.quality);
     applyLightQuality(this.lights, this.quality);
+    this.maps.setQuality(this.quality);
     this.rebuildDecorations(this.seed ^ 0x1f2e3d4c);
     this.callbacks.onQualityChanged(this.quality, fps);
   }
@@ -405,10 +508,26 @@ export class Game {
       streak: this.score.streak,
     });
 
+    // The score of the question just answered sets the pace of the next one -
+    // never of its own gate, so the reading window can never shrink underneath
+    // a question that is already on screen.
+    const change = this.speedSystem.applyScore(this.score.score);
+    if (change !== null) {
+      this.callbacks.onSpeedTierChanged(change);
+    }
+
     // Show the next question immediately so the player gets its full reading
     // window while the feedback ribbon is still on screen.
-    const hasNext = this.questionSystem.advance(this.player.position.z);
-    this.currentSpeed = this.questionSystem.currentSpeed;
+    let hasNext = false;
+    if (this.questionSystem.hasNextQuestion) {
+      const pacing = pacingForQuestion(
+        this.grade,
+        this.questionSystem.questionIndex + 1,
+        this.score.score,
+        this.speedSystem.getCurrent(),
+      );
+      hasNext = this.questionSystem.advance(this.player.position.z, pacing);
+    }
     this.pendingFinish = !hasNext;
 
     this.feedback.begin(result.correct, () => {
@@ -451,6 +570,7 @@ export class Game {
   }
 
   dispose(): void {
+    this.maps.disposeActiveMap();
     this.questionSystem.dispose();
     this.particles.dispose();
     this.decorations.dispose();

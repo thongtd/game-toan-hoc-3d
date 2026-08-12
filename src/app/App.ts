@@ -11,7 +11,10 @@ import type { Grade, LaneIndex, Question, RunResult } from '../../shared/game-ty
 import { isGrade } from '../../shared/game-types.ts';
 import { InputSystem } from '../game/systems/InputSystem.ts';
 import type { LaneDirection } from '../game/systems/InputSystem.ts';
-import { GenerationExhaustedError, generateQuestions } from '../../shared/math/question-generator.ts';
+import {
+  GenerationExhaustedError,
+  generateQuestions,
+} from '../../shared/math/question-generator.ts';
 import { buildFallbackRun } from '../../shared/content/seed-questions.ts';
 import { createRng, createTimeSeed } from '../../shared/math/seeded-rng.ts';
 import { GameStorage } from '../storage/GameStorage.ts';
@@ -26,6 +29,11 @@ import type { PlayerDraft } from '../ui/screens/PlayerHubScreen.ts';
 import type { LeaderboardFilters } from '../ui/components/LeaderboardBoard.ts';
 import { suggestGradeForAge } from '../../shared/validation/profile.ts';
 import type { StartRunResponse, VerifiedRunResult } from '../../shared/contracts/api.ts';
+import type { MapId } from '../../shared/maps/map-manifest.ts';
+import { enabledMapIds, isMapId } from '../../shared/maps/map-manifest.ts';
+import { chooseSmartMap } from '../../shared/maps/smart-random.ts';
+import type { MapSelectionMode } from '../player/map-preference.ts';
+import { MapPreferenceStorage } from '../player/map-preference.ts';
 
 /** Practice mode is opt-in and never reaches the leaderboard. */
 const ALLOW_PRACTICE_OFFLINE = import.meta.env.VITE_ALLOW_PRACTICE_OFFLINE === 'true';
@@ -50,8 +58,12 @@ export class App {
   private readonly session: PlayerSession;
   private readonly hub: PlayerHubScreen;
 
+  private readonly mapPreferences = MapPreferenceStorage.fromWindow();
+
   private game: Game | null = null;
   private grade: Grade;
+  /** The map the next run will use; resolved from the roulette at start time. */
+  private mapSelection: { mode: MapSelectionMode; mapId: MapId };
   private lastResult: RunResult | null = null;
   private countdownElapsedMs = 0;
   private countdownStep = -1;
@@ -64,8 +76,15 @@ export class App {
   constructor() {
     this.canvas = requireElementOfType('game-canvas', HTMLCanvasElement);
     // A dev-only ?grade= override makes a specific grade reproducible by hand.
-    this.grade = readDevOverrides().grade ?? this.storage.selectedGrade;
+    const overrides = readDevOverrides();
+    this.grade = overrides.grade ?? this.storage.selectedGrade;
     this.audio = new AudioManager(this.storage.muted);
+
+    const savedMap = this.mapPreferences.getPreference();
+    this.mapSelection =
+      overrides.mapId === null
+        ? { mode: savedMap.mode, mapId: savedMap.selectedMapId }
+        : { mode: 'manual', mapId: overrides.mapId };
 
     this.ui = new UIController({
       selectGrade: (grade) => {
@@ -110,6 +129,18 @@ export class App {
       },
       hover: () => {
         this.audio.play('rollover', 400);
+      },
+      selectMap: (selection) => {
+        this.audio.play('switch', 60);
+        this.mapSelection = selection;
+        this.mapPreferences.setPreference({
+          mode: selection.mode,
+          selectedMapId: selection.mapId,
+        });
+      },
+      retryMap: () => {
+        this.audio.play('click');
+        void this.beginCountdown(false);
       },
     });
 
@@ -203,6 +234,14 @@ export class App {
 
       this.ui.setLoadingProgress(1, 'Sẵn sàng!');
       this.startLoop();
+
+      // The thumbnail capture route: one map, no UI, no profile, no run.
+      const preview = readPreviewRequest();
+      if (preview !== null) {
+        await this.enterPreview(preview);
+        return;
+      }
+
       await this.enterPlayerHub();
 
       // Scenery is not needed for the menu, so it streams in afterwards.
@@ -250,6 +289,10 @@ export class App {
           this.ui.markTutorialPractised();
         }
       },
+      onSpeedTierChanged: (change) => {
+        this.audio.play('switch', 40);
+        this.ui.showSpeedUp(change.toTier, change.reachedMax);
+      },
     });
 
     game.setReducedMotion(prefersReducedMotion());
@@ -270,6 +313,31 @@ export class App {
       this.state.transition('error');
     }
     this.ui.showError(message);
+  }
+
+  /* ------------------------------ Preview ---------------------------- */
+
+  /**
+   * Renders one map with the interface hidden.
+   *
+   * This is how the thumbnails in the map selector are produced: they are
+   * screenshots of the real scene at a fixed seed and camera, so the picture a
+   * child chooses from is the world they actually get.
+   */
+  private async enterPreview(request: PreviewRequest): Promise<void> {
+    const game = this.game;
+    if (game === null) return;
+
+    if (request.hideUi) {
+      document.body.classList.add('app--preview');
+    }
+
+    await game.loadMap(request.mapId, request.seed);
+    game.setStage('attract');
+
+    // Let a couple of frames render so shaders are warm before the capture.
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    window.__MATH_RUNNER_PREVIEW_READY__ = true;
   }
 
   /* ---------------------------- Player Hub --------------------------- */
@@ -382,7 +450,22 @@ export class App {
     }
     this.input.setEnabled(false);
     this.game?.setStage('attract');
+    this.ui.maps.setSelection(this.mapSelection.mode, this.mapSelection.mapId);
     this.ui.showHome(this.grade, this.storage.bestScore(this.grade));
+  }
+
+  /**
+   * Decides which map the next run uses.
+   *
+   * Smart random asks the shared chooser, preferring maps the player has seen
+   * least. The stats come from the server when they are available and from the
+   * local cache when they are not, so the pick is never worse than random.
+   */
+  private resolveMapId(): MapId {
+    if (this.mapSelection.mode === 'manual') return this.mapSelection.mapId;
+
+    const stats = this.session.mapStats ?? this.mapPreferences.getStats();
+    return chooseSmartMap(enabledMapIds(), stats);
   }
 
   private selectGrade(grade: Grade): void {
@@ -406,7 +489,7 @@ export class App {
     }
 
     this.state.transition('tutorial');
-    this.game?.prepareTutorial(this.grade);
+    this.game?.prepareTutorial();
     this.game?.setStage('tutorial');
     this.input.setEnabled(true);
     this.ui.showTutorial(true);
@@ -426,11 +509,28 @@ export class App {
     const game = this.game;
     if (game === null) return;
 
-    const session = await this.openRunSession();
+    const requestedMapId = this.resolveMapId();
+    const session = await this.openRunSession(requestedMapId);
     if (session === 'blocked') return;
 
     this.activeRun = session;
+    // The server's map wins: it is the one recorded against the run.
+    const mapId = session?.mapId ?? requestedMapId;
+    this.ui.maps.showResolved(mapId);
+    // Keep the preview on what was actually played, without turning the
+    // roulette off - the mode is the child's choice, the preview is feedback.
+    this.mapSelection = { ...this.mapSelection, mapId };
+
     const seed = session?.seed ?? readDevOverrides().seed ?? createTimeSeed();
+
+    // The world has to be standing before the countdown starts, or the first
+    // question would lose part of its reading time to the loading screen.
+    this.ui.showMapLoading(mapId);
+    const load = await game.loadMap(mapId, seed);
+    if (load.outcome === 'fallback') {
+      this.ui.showFallbackNotice();
+    }
+
     const questions = this.buildQuestions(this.grade, seed);
 
     game.prepareRun(this.grade, seed, questions);
@@ -438,6 +538,7 @@ export class App {
     this.ui.setScore(0);
     this.ui.setStreak(0);
     this.ui.hideFeedback();
+    this.ui.resetSpeedMeter();
     this.ui.setPracticeMode(session === null);
 
     this.countdownElapsedMs = 0;
@@ -457,7 +558,7 @@ export class App {
    * Returns the session, `null` for an explicitly enabled unranked practice
    * run, or `'blocked'` when the run must not start at all.
    */
-  private async openRunSession(): Promise<StartRunResponse | null | 'blocked'> {
+  private async openRunSession(mapId: MapId): Promise<StartRunResponse | null | 'blocked'> {
     if (this.session.player === null) {
       // No profile yet: only practice is possible, and only if enabled.
       return ALLOW_PRACTICE_OFFLINE ? null : this.blockRun('Bạn cần tạo tay đua trước nhé!');
@@ -465,7 +566,7 @@ export class App {
 
     this.ui.setStartBusy(true);
     try {
-      return await runsApi.start(this.api, this.grade);
+      return await runsApi.start(this.api, this.grade, mapId);
     } catch (error) {
       if (ALLOW_PRACTICE_OFFLINE) return null;
       const message =
@@ -541,6 +642,7 @@ export class App {
    */
   private handleFinished(result: Omit<RunResult, 'isNewBest'>): void {
     this.input.setEnabled(false);
+    this.noteMapPlayed();
     if (this.state.phase === 'running' || this.state.phase === 'feedback') {
       this.state.transition('finished');
     }
@@ -561,6 +663,20 @@ export class App {
     this.lastResult = preview;
     this.ui.showResult(preview, this.session.bestScore(result.grade));
     void this.submitRun(run, result);
+  }
+
+  /**
+   * Counts the map that was just played.
+   *
+   * Kept locally as well as on the server so the roulette still avoids repeats
+   * when the profile request is slow or the player is offline.
+   */
+  private noteMapPlayed(): void {
+    const mapId = this.game?.activeMapId ?? this.activeRun?.mapId ?? null;
+    if (mapId === null) return;
+
+    const stats = this.session.noteMapPlayed(mapId);
+    this.mapPreferences.setStats(stats);
   }
 
   private async submitRun(
@@ -791,6 +907,7 @@ export class App {
         this.clock.setTimeScale(scale);
       },
       getLastResult: () => this.lastResult,
+      getRenderStats: () => this.game?.renderStats ?? { geometries: 0, textures: 0, programs: 0 },
     });
   }
 
@@ -806,18 +923,53 @@ export class App {
   }
 }
 
+declare global {
+  interface Window {
+    /** Set once the preview scene has rendered; the capture script waits on it. */
+    __MATH_RUNNER_PREVIEW_READY__?: boolean;
+  }
+}
+
+interface PreviewRequest {
+  mapId: MapId;
+  seed: number;
+  hideUi: boolean;
+}
+
+/**
+ * `?previewMap=cosmic-orbit&previewSeed=1001&ui=0`.
+ *
+ * Available in every build because the thumbnails are captured from the
+ * production bundle - it only chooses scenery, and cannot start a ranked run.
+ */
+function readPreviewRequest(): PreviewRequest | null {
+  const params = new URLSearchParams(window.location.search);
+  const mapId = params.get('previewMap');
+  if (!isMapId(mapId)) return null;
+
+  const rawSeed = Number.parseInt(params.get('previewSeed') ?? '', 10);
+
+  return {
+    mapId,
+    seed: Number.isFinite(rawSeed) ? rawSeed >>> 0 : 1001,
+    hideUi: params.get('ui') !== '1',
+  };
+}
+
 interface DevOverrides {
   seed: number | null;
   grade: Grade | null;
+  mapId: MapId | null;
 }
 
-/** `?seed=12345&grade=2` is honoured in development builds only. */
+/** `?seed=12345&grade=2&map=toy-city` is honoured in development builds only. */
 function readDevOverrides(): DevOverrides {
-  if (!import.meta.env.DEV) return { seed: null, grade: null };
+  if (!import.meta.env.DEV) return { seed: null, grade: null, mapId: null };
 
   const params = new URLSearchParams(window.location.search);
   const rawSeed = params.get('seed');
   const rawGrade = params.get('grade');
+  const rawMap = params.get('map') ?? params.get('previewMap');
 
   const seed = rawSeed === null ? null : Number.parseInt(rawSeed, 10);
   const grade = rawGrade === null ? null : Number.parseInt(rawGrade, 10);
@@ -825,6 +977,7 @@ function readDevOverrides(): DevOverrides {
   return {
     seed: seed !== null && Number.isFinite(seed) ? seed >>> 0 : null,
     grade: isGrade(grade) ? grade : null,
+    mapId: isMapId(rawMap) ? rawMap : null,
   };
 }
 

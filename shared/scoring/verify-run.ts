@@ -1,7 +1,7 @@
 import type { Grade, LaneIndex } from '../game-types.ts';
 import { generateQuestions } from '../math/question-generator.ts';
 import { ScoreTracker, computeStars } from './scoring.ts';
-import { computeRunPacing } from './run-pacing.ts';
+import { pacingForQuestion } from './run-pacing.ts';
 
 /**
  * Recomputes a run's result from the answers alone.
@@ -111,7 +111,6 @@ export function verifyRun(input: VerifyRunInput): VerifyRunOutcome {
 
   // Rebuild exactly what the player saw.
   const questions = generateQuestions({ grade, seed, count: totalQuestions });
-  const pacing = computeRunPacing(grade, seed, totalQuestions);
   const byIndex = new Map(answers.map((answer) => [answer.questionIndex, answer]));
 
   const tracker = new ScoreTracker();
@@ -120,10 +119,13 @@ export function verifyRun(input: VerifyRunInput): VerifyRunOutcome {
   for (let index = 0; index < totalQuestions; index += 1) {
     const question = questions[index];
     const answer = byIndex.get(index);
-    const window = pacing[index];
-    if (question === undefined || answer === undefined || window === undefined) {
+    if (question === undefined || answer === undefined) {
       return { ok: false, reason: 'ANSWER_COUNT_MISMATCH' };
     }
+
+    // The gate for this question was placed from the score the player had when
+    // it appeared, so the reading window is recomputed the same way here.
+    const window = pacingForQuestion(grade, index, tracker.score);
 
     const selectedIndex = answer.selectedIndex as LaneIndex;
     const isCorrect = selectedIndex === question.correctIndex;
