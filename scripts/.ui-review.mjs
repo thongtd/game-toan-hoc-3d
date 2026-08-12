@@ -35,7 +35,9 @@ async function run(name, width, height) {
   page.on('pageerror', (e) => errors.push(e.message));
 
   await page.goto(BASE);
-  await page.waitForSelector('[data-testid="screen-player-hub"]:not(.is-hidden)', { timeout: 40000 });
+  await page.waitForSelector('[data-testid="screen-player-hub"]:not(.is-hidden)', {
+    timeout: 40000,
+  });
   await page.waitForTimeout(900);
   await page.screenshot({ path: `${OUT}/01-hub-${name}.png` });
 
@@ -74,7 +76,11 @@ async function run(name, width, height) {
       (lane) => window.__MATH_RUNNER_DEBUG__.moveToLane(lane),
       cur.activeQuestion.correctIndex,
     );
-    await waitFor(page, (x) => x.questionIndex > cur.questionIndex || x.phase === 'finished', `r${i}`);
+    await waitFor(
+      page,
+      (x) => x.questionIndex > cur.questionIndex || x.phase === 'finished',
+      `r${i}`,
+    );
   }
   await page.screenshot({ path: `${OUT}/07-game-speed-${name}.png` });
 
@@ -91,7 +97,11 @@ async function run(name, width, height) {
       (lane) => window.__MATH_RUNNER_DEBUG__.moveToLane(lane),
       cur.activeQuestion.correctIndex,
     );
-    await waitFor(page, (x) => x.questionIndex > cur.questionIndex || x.phase === 'finished', `f${i}`);
+    await waitFor(
+      page,
+      (x) => x.questionIndex > cur.questionIndex || x.phase === 'finished',
+      `f${i}`,
+    );
   }
 
   await page.waitForSelector('[data-testid="screen-result"]:not(.is-hidden)', { timeout: 40000 });
@@ -108,7 +118,12 @@ async function run(name, width, height) {
       const el = document.querySelector(sel);
       if (!el) return null;
       const r = el.getBoundingClientRect();
-      return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) };
+      return {
+        x: Math.round(r.x),
+        y: Math.round(r.y),
+        w: Math.round(r.width),
+        h: Math.round(r.height),
+      };
     };
     return {
       overflowX: root.scrollWidth - root.clientWidth,
