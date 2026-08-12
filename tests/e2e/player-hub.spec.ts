@@ -4,9 +4,25 @@ import { answerCurrentQuestion, collectConsoleErrors, ensureProfile, snapshot, s
 
 const SCREENSHOT_DIR = 'artifacts/screenshots';
 
-/** A fresh nickname per test keeps the shared leaderboard readable. */
+/**
+ * A fresh nickname per test keeps the shared leaderboard readable.
+ * Kept short so the result always fits the 16 character limit.
+ */
 function uniqueNickname(prefix: string): string {
-  return `${prefix} ${String(Date.now() % 100000)}`;
+  return `${prefix} ${String(Date.now() % 1000).padStart(3, '0')}`;
+}
+
+/** Marks the tutorial as already seen, so Start goes straight to a run. */
+async function skipTutorialOnce(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const key = 'math-runner-3d:v1';
+    const raw = window.localStorage.getItem(key);
+    const data: Record<string, unknown> =
+      raw === null ? { version: 1 } : (JSON.parse(raw) as Record<string, unknown>);
+    data['version'] = 1;
+    data['tutorialSeen'] = true;
+    window.localStorage.setItem(key, JSON.stringify(data));
+  });
 }
 
 async function openHub(page: Page): Promise<void> {
@@ -94,7 +110,7 @@ test.describe('Sảnh Người Chơi', () => {
   });
 
   test('tiếng Việt có dấu hiển thị đúng trong hồ sơ và bảng xếp hạng', async ({ page }) => {
-    const nickname = uniqueNickname('Nhím Xù Đường');
+    const nickname = uniqueNickname('Nhím Xù');
     await openHub(page);
     await ensureProfile(page, { nickname, age: 7 });
     await expect(page.getByTestId('screen-home')).toBeVisible({ timeout: 20_000 });
@@ -165,6 +181,7 @@ test.describe('Sảnh Người Chơi', () => {
     await ensureProfile(page, { nickname: uniqueNickname('Mất Mạng') });
     await expect(page.getByTestId('screen-home')).toBeVisible({ timeout: 20_000 });
 
+    await skipTutorialOnce(page);
     await page.route('**/api/v1/runs/start', (route) => route.abort('failed'));
     await page.getByTestId('btn-start').click();
 
@@ -173,7 +190,7 @@ test.describe('Sảnh Người Chơi', () => {
   });
 
   test('điểm dùng kết quả server và lên bảng xếp hạng', async ({ page }) => {
-    const nickname = uniqueNickname('Tay Đua Top');
+    const nickname = uniqueNickname('Top');
     await page.goto('/');
     await startRun(page, { grade: 1, timeScale: 3, nickname });
 

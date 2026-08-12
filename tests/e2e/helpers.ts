@@ -109,12 +109,13 @@ export async function startRun(
   await page.getByTestId(`grade-${String(grade)}`).click();
   await page.getByTestId('btn-start').click();
 
-  // The tutorial only appears the first time; skip it when already seen.
+  // The tutorial only appears the first time; it is played in the world, so
+  // the "ready" button appears only after a real lane change.
   const tutorial = page.getByTestId('screen-tutorial');
   if (await tutorial.isVisible()) {
-    await expect(page.getByTestId('btn-ready')).toBeDisabled();
-    await page.getByTestId('btn-tutorial-left').click();
-    await expect(page.getByTestId('btn-ready')).toBeEnabled();
+    await expect(page.getByTestId('btn-ready')).toBeHidden();
+    await page.getByTestId('btn-left').click();
+    await expect(page.getByTestId('btn-ready')).toBeVisible();
     await page.getByTestId('btn-ready').click();
   }
 
