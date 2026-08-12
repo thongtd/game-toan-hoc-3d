@@ -1,0 +1,327 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "id": "animal-panda-01",
+      "category": "animals",
+      "displayName": "Gấu trúc",
+      "imageUrl": "assets/avatars/animal-panda-01.png",
+      "sourcePack": "Kenney Animal Pack Remastered",
+      "sourceFile": "PNG/Round/panda.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 10
+    },
+    {
+      "id": "animal-dog-01",
+      "category": "animals",
+      "displayName": "Chú chó",
+      "imageUrl": "assets/avatars/animal-dog-01.png",
+      "sourcePack": "Kenney Animal Pack Remastered",
+      "sourceFile": "PNG/Round/dog.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 20
+    },
+    {
+      "id": "animal-frog-01",
+      "category": "animals",
+      "displayName": "Chú ếch",
+      "imageUrl": "assets/avatars/animal-frog-01.png",
+      "sourcePack": "Kenney Animal Pack Remastered",
+      "sourceFile": "PNG/Round/frog.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 30
+    },
+    {
+      "id": "animal-elephant-01",
+      "category": "animals",
+      "displayName": "Voi con",
+      "imageUrl": "assets/avatars/animal-elephant-01.png",
+      "sourcePack": "Kenney Animal Pack Remastered",
+      "sourceFile": "PNG/Round/elephant.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 40
+    },
+    {
+      "id": "animal-monkey-01",
+      "category": "animals",
+      "displayName": "Khỉ nhỏ",
+      "imageUrl": "assets/avatars/animal-monkey-01.png",
+      "sourcePack": "Kenney Animal Pack Remastered",
+      "sourceFile": "PNG/Round/monkey.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 50
+    },
+    {
+      "id": "animal-owl-01",
+      "category": "animals",
+      "displayName": "Cú mèo",
+      "imageUrl": "assets/avatars/animal-owl-01.png",
+      "sourcePack": "Kenney Animal Pack Remastered",
+      "sourceFile": "PNG/Round/owl.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 60
+    },
+    {
+      "id": "animal-penguin-01",
+      "category": "animals",
+      "displayName": "Chim cánh cụt",
+      "imageUrl": "assets/avatars/animal-penguin-01.png",
+      "sourcePack": "Kenney Animal Pack Remastered",
+      "sourceFile": "PNG/Round/penguin.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 70
+    },
+    {
+      "id": "animal-rabbit-01",
+      "category": "animals",
+      "displayName": "Thỏ trắng",
+      "imageUrl": "assets/avatars/animal-rabbit-01.png",
+      "sourcePack": "Kenney Animal Pack Remastered",
+      "sourceFile": "PNG/Round/rabbit.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 80
+    },
+
+    {
+      "id": "robot-blue-01",
+      "category": "robots",
+      "displayName": "Robot xanh dương",
+      "imageUrl": "assets/avatars/robot-blue-01.png",
+      "sourcePack": "Kenney Robot Pack",
+      "sourceFile": "PNG/Side view/robot_blueBody.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 110
+    },
+    {
+      "id": "robot-green-01",
+      "category": "robots",
+      "displayName": "Robot xanh lá",
+      "imageUrl": "assets/avatars/robot-green-01.png",
+      "sourcePack": "Kenney Robot Pack",
+      "sourceFile": "PNG/Side view/robot_greenBody.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 120
+    },
+    {
+      "id": "robot-red-01",
+      "category": "robots",
+      "displayName": "Robot đỏ",
+      "imageUrl": "assets/avatars/robot-red-01.png",
+      "sourcePack": "Kenney Robot Pack",
+      "sourceFile": "PNG/Side view/robot_redBody.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 130
+    },
+    {
+      "id": "robot-yellow-01",
+      "category": "robots",
+      "displayName": "Robot vàng",
+      "imageUrl": "assets/avatars/robot-yellow-01.png",
+      "sourcePack": "Kenney Robot Pack",
+      "sourceFile": "PNG/Side view/robot_yellowBody.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 140
+    },
+    {
+      "id": "robot-cyclops-blue-01",
+      "category": "robots",
+      "displayName": "Robot một mắt xanh",
+      "imageUrl": "assets/avatars/robot-cyclops-blue-01.png",
+      "sourcePack": "Kenney Robot Pack",
+      "sourceFile": "PNG/Top view/body_3Dblue.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 150
+    },
+    {
+      "id": "robot-cyclops-red-01",
+      "category": "robots",
+      "displayName": "Robot một mắt đỏ",
+      "imageUrl": "assets/avatars/robot-cyclops-red-01.png",
+      "sourcePack": "Kenney Robot Pack",
+      "sourceFile": "PNG/Top view/body_3Dred.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 160
+    },
+    {
+      "id": "robot-cyclops-yellow-01",
+      "category": "robots",
+      "displayName": "Robot một mắt vàng",
+      "imageUrl": "assets/avatars/robot-cyclops-yellow-01.png",
+      "sourcePack": "Kenney Robot Pack",
+      "sourceFile": "PNG/Top view/body_3Dyellow.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 170
+    },
+
+    {
+      "id": "aircraft-plane-blue-01",
+      "category": "aircraft",
+      "displayName": "Máy bay xanh",
+      "imageUrl": "assets/avatars/aircraft-plane-blue-01.png",
+      "sourcePack": "Kenney Tappy Plane",
+      "sourceFile": "PNG/Planes/planeBlue1.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 210
+    },
+    {
+      "id": "aircraft-plane-green-01",
+      "category": "aircraft",
+      "displayName": "Máy bay lá",
+      "imageUrl": "assets/avatars/aircraft-plane-green-01.png",
+      "sourcePack": "Kenney Tappy Plane",
+      "sourceFile": "PNG/Planes/planeGreen1.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 220
+    },
+    {
+      "id": "aircraft-plane-red-01",
+      "category": "aircraft",
+      "displayName": "Máy bay đỏ",
+      "imageUrl": "assets/avatars/aircraft-plane-red-01.png",
+      "sourcePack": "Kenney Tappy Plane",
+      "sourceFile": "PNG/Planes/planeRed1.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 230
+    },
+    {
+      "id": "aircraft-plane-yellow-01",
+      "category": "aircraft",
+      "displayName": "Máy bay vàng",
+      "imageUrl": "assets/avatars/aircraft-plane-yellow-01.png",
+      "sourcePack": "Kenney Tappy Plane",
+      "sourceFile": "PNG/Planes/planeYellow1.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 240
+    },
+    {
+      "id": "aircraft-ship-blue-01",
+      "category": "aircraft",
+      "displayName": "Phi thuyền xanh",
+      "imageUrl": "assets/avatars/aircraft-ship-blue-01.png",
+      "sourcePack": "Kenney Space Shooter Remastered",
+      "sourceFile": "PNG/playerShip1_blue.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 250
+    },
+    {
+      "id": "aircraft-ship-green-01",
+      "category": "aircraft",
+      "displayName": "Phi thuyền lá",
+      "imageUrl": "assets/avatars/aircraft-ship-green-01.png",
+      "sourcePack": "Kenney Space Shooter Remastered",
+      "sourceFile": "PNG/playerShip2_green.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 260
+    },
+    {
+      "id": "aircraft-ship-orange-01",
+      "category": "aircraft",
+      "displayName": "Phi thuyền cam",
+      "imageUrl": "assets/avatars/aircraft-ship-orange-01.png",
+      "sourcePack": "Kenney Space Shooter Remastered",
+      "sourceFile": "PNG/playerShip3_orange.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 270
+    },
+
+    {
+      "id": "vehicle-tank-blue-01",
+      "category": "vehicles",
+      "displayName": "Xe tăng xanh",
+      "imageUrl": "assets/avatars/vehicle-tank-blue-01.png",
+      "sourcePack": "Kenney Top-down Tanks Remastered",
+      "sourceFile": "PNG/Default size/tankBody_blue.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 310
+    },
+    {
+      "id": "vehicle-tank-green-01",
+      "category": "vehicles",
+      "displayName": "Xe tăng lá",
+      "imageUrl": "assets/avatars/vehicle-tank-green-01.png",
+      "sourcePack": "Kenney Top-down Tanks Remastered",
+      "sourceFile": "PNG/Default size/tankBody_green.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 320
+    },
+    {
+      "id": "vehicle-tank-red-01",
+      "category": "vehicles",
+      "displayName": "Xe tăng đỏ",
+      "imageUrl": "assets/avatars/vehicle-tank-red-01.png",
+      "sourcePack": "Kenney Top-down Tanks Remastered",
+      "sourceFile": "PNG/Default size/tankBody_red.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 330
+    },
+    {
+      "id": "vehicle-tank-sand-01",
+      "category": "vehicles",
+      "displayName": "Xe tăng cát",
+      "imageUrl": "assets/avatars/vehicle-tank-sand-01.png",
+      "sourcePack": "Kenney Top-down Tanks Remastered",
+      "sourceFile": "PNG/Default size/tankBody_sand.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 340
+    },
+    {
+      "id": "vehicle-tank-big-01",
+      "category": "vehicles",
+      "displayName": "Xe tăng bự",
+      "imageUrl": "assets/avatars/vehicle-tank-big-01.png",
+      "sourcePack": "Kenney Top-down Tanks Remastered",
+      "sourceFile": "PNG/Default size/tankBody_bigRed.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 350
+    },
+    {
+      "id": "vehicle-tank-navy-01",
+      "category": "vehicles",
+      "displayName": "Xe tăng biển",
+      "imageUrl": "assets/avatars/vehicle-tank-navy-01.png",
+      "sourcePack": "Kenney Tanks",
+      "sourceFile": "PNG/Default size/tanks_tankNavy_body1.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 360
+    },
+    {
+      "id": "vehicle-tank-desert-01",
+      "category": "vehicles",
+      "displayName": "Xe tăng sa mạc",
+      "imageUrl": "assets/avatars/vehicle-tank-desert-01.png",
+      "sourcePack": "Kenney Tanks",
+      "sourceFile": "PNG/Default size/tanks_tankDesert_body1.png",
+      "license": "CC0",
+      "enabled": true,
+      "sortOrder": 370
+    }
+  ]
+}

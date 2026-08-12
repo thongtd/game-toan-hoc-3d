@@ -1,0 +1,772 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#bfe8ff" />
+    <meta
+      name="description"
+      content="Đường đua Toán học 3D - trò chơi luyện Toán vui cho học sinh tiểu học lớp 1 đến lớp 5."
+    />
+    <title>Đường đua Toán học 3D</title>
+  </head>
+  <body>
+    <!-- Layer 1: the 3D world, always full viewport and always behind the UI. -->
+    <canvas id="game-canvas" class="game-canvas" aria-hidden="true"></canvas>
+
+    <!-- Internal icon set. No emoji and no external icon font. -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true" focusable="false">
+      <defs>
+        <symbol id="icon-play" viewBox="0 0 24 24">
+          <path d="M7 4.5c0-.8.9-1.3 1.6-.9l10 7.5c.6.4.6 1.4 0 1.8l-10 7.5c-.7.5-1.6 0-1.6-.9z" />
+        </symbol>
+        <symbol id="icon-pause" viewBox="0 0 24 24">
+          <rect x="5" y="4" width="5" height="16" rx="1.6" />
+          <rect x="14" y="4" width="5" height="16" rx="1.6" />
+        </symbol>
+        <symbol id="icon-sound-on" viewBox="0 0 24 24">
+          <path d="M4 9.5h3.2L12 5.2c.7-.6 1.7-.1 1.7.8v12c0 .9-1 1.4-1.7.8L7.2 14.5H4c-.6 0-1-.4-1-1v-3c0-.6.4-1 1-1z" />
+          <path
+            d="M16.5 8.4a1 1 0 0 1 1.4.1 5.5 5.5 0 0 1 0 7 1 1 0 1 1-1.5-1.3 3.5 3.5 0 0 0 0-4.4 1 1 0 0 1 .1-1.4z"
+          />
+          <path
+            d="M19.2 5.6a1 1 0 0 1 1.4.1 9.3 9.3 0 0 1 0 12.6 1 1 0 0 1-1.5-1.4 7.3 7.3 0 0 0 0-9.9 1 1 0 0 1 .1-1.4z"
+          />
+        </symbol>
+        <symbol id="icon-sound-off" viewBox="0 0 24 24">
+          <path d="M4 9.5h3.2L12 5.2c.7-.6 1.7-.1 1.7.8v12c0 .9-1 1.4-1.7.8L7.2 14.5H4c-.6 0-1-.4-1-1v-3c0-.6.4-1 1-1z" />
+          <path
+            d="M16.3 9.3a1 1 0 0 1 1.4 0l1.5 1.5 1.5-1.5a1 1 0 1 1 1.4 1.4L20.6 12l1.5 1.5a1 1 0 0 1-1.4 1.4l-1.5-1.5-1.5 1.5a1 1 0 0 1-1.4-1.4l1.5-1.5-1.5-1.5a1 1 0 0 1 0-1.4z"
+          />
+        </symbol>
+        <symbol id="icon-arrow-left" viewBox="0 0 24 24">
+          <path d="M15.5 3.3c.8-.6 1.9 0 1.9 1v15.4c0 1-1.1 1.6-1.9 1L5.2 12.8a1 1 0 0 1 0-1.6z" />
+        </symbol>
+        <symbol id="icon-arrow-right" viewBox="0 0 24 24">
+          <path d="M8.5 3.3c-.8-.6-1.9 0-1.9 1v15.4c0 1 1.1 1.6 1.9 1l10.3-7.9a1 1 0 0 0 0-1.6z" />
+        </symbol>
+        <symbol id="icon-star" viewBox="0 0 24 24">
+          <path
+            d="M12 1.8c.4 0 .8.2 1 .6l2.6 5.3 5.8.8c.9.1 1.2 1.2.6 1.8l-4.2 4.1 1 5.8c.2.9-.8 1.6-1.6 1.2L12 18.7l-5.2 2.7c-.8.4-1.8-.3-1.6-1.2l1-5.8-4.2-4.1c-.6-.6-.3-1.7.6-1.8l5.8-.8L11 2.4c.2-.4.6-.6 1-.6z"
+          />
+        </symbol>
+        <symbol id="icon-coin" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" />
+          <circle cx="12" cy="12" r="7.2" fill="rgba(0,0,0,0.18)" />
+          <path
+            d="M12 6.6c.5 0 .9.4.9.9v.4c.9.2 1.6.7 2 1.3.3.4.1 1-.3 1.2-.4.3-1 .1-1.3-.3-.2-.3-.7-.5-1.3-.5-.8 0-1.3.3-1.3.7 0 .4.3.6 1.6.9 1.4.3 2.9.8 2.9 2.5 0 1.2-.9 2.1-2.3 2.4v.4c0 .5-.4.9-.9.9s-.9-.4-.9-.9v-.4c-1-.2-1.8-.7-2.2-1.4-.3-.4-.1-1 .3-1.2.5-.3 1-.1 1.3.3.2.4.8.6 1.5.6.9 0 1.4-.3 1.4-.7 0-.5-.4-.7-1.7-1-1.3-.3-2.8-.7-2.8-2.4 0-1.1.9-2 2.2-2.3v-.4c0-.5.4-.9.9-.9z"
+            fill="rgba(0,0,0,0.28)"
+          />
+        </symbol>
+        <symbol id="icon-flag" viewBox="0 0 24 24">
+          <path d="M5 2.5c.6 0 1 .4 1 1V21a1 1 0 1 1-2 0V3.5c0-.6.4-1 1-1z" />
+          <path d="M7.5 4h11.6c.6 0 1 .6.7 1.1L17.4 9l2.4 3.9c.3.5-.1 1.1-.7 1.1H7.5z" />
+        </symbol>
+        <symbol id="icon-checkered" viewBox="0 0 24 24">
+          <path d="M4 2.5c.6 0 1 .4 1 1V21a1 1 0 1 1-2 0V3.5c0-.6.4-1 1-1z" />
+          <path d="M6.5 4h5v3.5h-5zM11.5 7.5h5V11h-5zM16.5 4h4v3.5h-4zM6.5 11h5v3.5h-5z" />
+          <path d="M11.5 4h5v3.5h-5zM16.5 7.5h4V11h-4zM6.5 7.5h5V11h-5z" fill="rgba(0,0,0,0.28)" />
+        </symbol>
+        <symbol id="icon-bolt" viewBox="0 0 24 24">
+          <path d="M13.6 1.9c.7-.5 1.6.2 1.3 1l-1.9 5.4h4.3c.9 0 1.3 1 .7 1.6l-9.6 12c-.6.7-1.7 0-1.4-.9l2-5.9H4.9c-.8 0-1.3-1-.7-1.6z" />
+        </symbol>
+        <symbol id="icon-check" viewBox="0 0 24 24">
+          <path
+            d="M20.3 5.7c.5.5.5 1.3 0 1.8l-9.6 10a1.3 1.3 0 0 1-1.9 0l-4.8-5a1.3 1.3 0 1 1 1.9-1.8l3.9 4 8.7-9a1.3 1.3 0 0 1 1.8 0z"
+          />
+        </symbol>
+        <symbol id="icon-cross" viewBox="0 0 24 24">
+          <path
+            d="M5.3 5.3a1.3 1.3 0 0 1 1.8 0L12 10.2l4.9-4.9a1.3 1.3 0 1 1 1.8 1.8L13.8 12l4.9 4.9a1.3 1.3 0 0 1-1.8 1.8L12 13.8l-4.9 4.9a1.3 1.3 0 0 1-1.8-1.8l4.9-4.9-4.9-4.9a1.3 1.3 0 0 1 0-1.8z"
+          />
+        </symbol>
+        <symbol id="icon-hand" viewBox="0 0 24 24">
+          <path
+            d="M9 3.4c0-.9.7-1.6 1.6-1.6s1.6.7 1.6 1.6v6h.7V5.1c0-.9.7-1.6 1.6-1.6s1.6.7 1.6 1.6v4.3h.7V7c0-.9.7-1.6 1.6-1.6S20 6.1 20 7v7.4c0 3.6-2.5 6.4-6.1 6.4h-1.4c-2 0-3.5-.8-4.6-2.4l-3.1-4.6c-.5-.7-.3-1.7.5-2.1.7-.4 1.6-.2 2 .4L9 13.6z"
+          />
+        </symbol>
+        <symbol id="icon-book" viewBox="0 0 24 24">
+          <path
+            d="M4 4.2c0-.7.6-1.3 1.3-1.3H9c1.3 0 2.4.5 3 1.3.6-.8 1.7-1.3 3-1.3h3.7c.7 0 1.3.6 1.3 1.3v13.4c0 .7-.6 1.3-1.3 1.3H15c-1 0-1.8.4-2.3 1a.9.9 0 0 1-1.4 0c-.5-.6-1.3-1-2.3-1H5.3c-.7 0-1.3-.6-1.3-1.3zm7.1 2.3c-.3-.5-1-.9-2.1-.9H6.6v11h2.4c.8 0 1.5.2 2.1.5zm1.8 10.6c.6-.3 1.3-.5 2.1-.5h2.4v-11H15c-1.1 0-1.8.4-2.1.9z"
+          />
+        </symbol>
+        <symbol id="icon-clock" viewBox="0 0 24 24">
+          <path
+            d="M12 2.2a9.8 9.8 0 1 0 0 19.6 9.8 9.8 0 0 0 0-19.6zm1 4.6v5l3.4 2a1 1 0 1 1-1 1.7l-3.9-2.3a1 1 0 0 1-.5-.9V6.8a1 1 0 1 1 2 0z"
+          />
+        </symbol>
+        <symbol id="icon-refresh" viewBox="0 0 24 24">
+          <path
+            d="M12 4.2c2.2 0 4.2 1 5.5 2.5l1.1-1.1c.6-.6 1.7-.2 1.7.7v4.4c0 .5-.4 1-1 1h-4.4c-.9 0-1.3-1.1-.7-1.7l1.4-1.4A5.4 5.4 0 0 0 6.7 11a1.3 1.3 0 1 1-2.6-.4A7.9 7.9 0 0 1 12 4.2zM4.7 11.3h4.4c.9 0 1.3 1.1.7 1.7l-1.4 1.4a5.4 5.4 0 0 0 8.9-2.4 1.3 1.3 0 1 1 2.6.4 8 8 0 0 1-13.4 3.9l-1.1 1.1c-.6.6-1.7.2-1.7-.7v-4.4c0-.6.4-1 1-1z"
+          />
+        </symbol>
+        <symbol id="icon-medal" viewBox="0 0 24 24">
+          <path d="M8.2 2h7.6l-2.6 7.1h-2.4z" />
+          <circle cx="12" cy="16" r="6" />
+          <circle cx="12" cy="16" r="3.6" fill="rgba(0,0,0,0.2)" />
+        </symbol>
+        <symbol id="icon-pencil" viewBox="0 0 24 24">
+          <path
+            d="M17.4 2.6a2.1 2.1 0 0 1 3 0l1 1a2.1 2.1 0 0 1 0 3l-1.4 1.4-4-4zM14.6 5.4l4 4L8.4 19.6c-.2.2-.4.3-.6.3l-4 .8a.8.8 0 0 1-1-1l.8-4c0-.2.1-.5.3-.6z"
+          />
+        </symbol>
+        <symbol id="icon-trophy" viewBox="0 0 24 24">
+          <path
+            d="M6 3h12a1 1 0 0 1 1 1v1h2.2a.8.8 0 0 1 .8.8c0 2.7-1.8 4.9-4.3 5.5-.8 1.6-2.2 2.8-3.7 3.2V17h2.5a1 1 0 0 1 0 2h-7a1 1 0 0 1 0-2H12v-2.5c-1.5-.4-2.9-1.6-3.7-3.2C5.8 10.7 4 8.5 4 5.8a.8.8 0 0 1 .8-.8H7V4a1 1 0 0 1 1-1zm-1 3.7C5.3 8 6 9 7.1 9.5A9 9 0 0 1 7 8.4V6.7zm14 0H17v1.7c0 .4 0 .8-.1 1.1 1.1-.5 1.8-1.5 2.1-2.8z"
+          />
+        </symbol>
+      </defs>
+    </svg>
+
+    <!-- Layers 3-5: HUD, screen overlays and short feedback. -->
+    <div id="game-ui" class="game-ui">
+      <!-- ============================ LOADING ============================ -->
+      <section id="screen-loading" class="screen" data-testid="screen-loading">
+        <div class="screen__center">
+          <div class="logo">
+            <svg class="logo__flag" aria-hidden="true"><use href="#icon-checkered" /></svg>
+            <span class="logo__line logo__line--top">Đường đua</span>
+            <span class="logo__line logo__line--bottom">Toán học</span>
+          </div>
+          <div class="loading">
+            <div
+              class="road-progress"
+              role="progressbar"
+              aria-labelledby="loading-status"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+              id="loading-progressbar"
+            >
+              <div class="road-progress__fill" id="loading-fill"></div>
+              <svg class="road-progress__flag" aria-hidden="true"><use href="#icon-checkered" /></svg>
+              <svg class="road-progress__coin" id="loading-coin" aria-hidden="true">
+                <use href="#icon-coin" />
+              </svg>
+            </div>
+            <p class="loading__status" id="loading-status" data-testid="loading-status">
+              Đang mở đường đua...
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================= ERROR ============================= -->
+      <section
+        id="screen-error"
+        class="screen screen--dimmed is-hidden"
+        data-testid="screen-error"
+      >
+        <div class="screen__center">
+          <div class="board board--narrow board--hanging">
+            <h2 class="board__title">
+              <svg class="board__title-icon" aria-hidden="true"><use href="#icon-flag" /></svg>
+              Chưa mở được đường đua
+            </h2>
+            <p class="board__text" id="error-message" data-testid="error-message">
+              Có vẻ mạng đang chậm. Bạn thử lại nhé!
+            </p>
+            <div class="board__actions">
+              <button type="button" class="game-button" id="btn-retry" data-testid="btn-retry">
+                Thử lại
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================== PLAYER HUB ========================== -->
+      <section id="screen-player-hub" class="screen is-hidden" data-testid="screen-player-hub">
+        <div class="hub">
+          <div class="hub__header">
+            <div class="logo logo--small">
+              <span class="logo__line logo__line--top">Đường đua</span>
+              <span class="logo__line logo__line--bottom">Toán học</span>
+            </div>
+          </div>
+
+          <div class="hub__panels">
+            <!-- ---------------------- Player Pass ---------------------- -->
+            <section
+              class="board board--pass"
+              aria-labelledby="pass-title"
+              data-testid="player-pass"
+            >
+              <h2 class="board__title" id="pass-title" data-testid="pass-title">Tạo tay đua</h2>
+
+              <div class="pass__avatar-row">
+                <div class="pass__avatar" id="pass-avatar-frame">
+                  <img
+                    class="pass__avatar-img"
+                    id="pass-avatar-img"
+                    alt=""
+                    width="128"
+                    height="128"
+                    data-testid="pass-avatar"
+                  />
+                </div>
+                <div class="pass__avatar-actions">
+                  <p class="pass__avatar-name" id="pass-avatar-name"></p>
+                  <button
+                    type="button"
+                    class="game-button game-button--secondary game-button--small"
+                    id="btn-open-avatar"
+                    data-testid="btn-open-avatar"
+                  >
+                    Chọn avatar
+                  </button>
+                </div>
+              </div>
+
+              <div class="pass__field" id="pass-editable">
+                <label class="pass__label" for="input-nickname">Biệt danh của bạn</label>
+                <input
+                  class="pass__input"
+                  id="input-nickname"
+                  name="nickname"
+                  type="text"
+                  maxlength="16"
+                  autocomplete="off"
+                  autocapitalize="words"
+                  spellcheck="false"
+                  enterkeyhint="done"
+                  data-testid="input-nickname"
+                  aria-describedby="nickname-error pass-safety"
+                />
+                <p class="pass__error is-hidden" id="nickname-error" data-testid="nickname-error" role="alert"></p>
+
+                <fieldset class="pass__ages">
+                  <legend class="pass__label">Chọn tuổi</legend>
+                  <div class="age-badges" id="age-badges" role="radiogroup" aria-label="Chọn tuổi"></div>
+                  <p class="pass__error is-hidden" id="age-error" data-testid="age-error" role="alert"></p>
+                </fieldset>
+
+                <p class="pass__safety" id="pass-safety">
+                  Chỉ dùng biệt danh vui, không nhập tên thật hoặc số điện thoại nhé!
+                </p>
+              </div>
+
+              <p class="pass__stats is-hidden" id="pass-stats" data-testid="pass-stats"></p>
+
+              <p class="pass__notice is-hidden" id="pass-notice" data-testid="pass-notice" role="status"></p>
+
+              <div class="board__actions">
+                <button
+                  type="button"
+                  class="game-button game-button--huge"
+                  id="btn-save-player"
+                  data-testid="btn-save-player"
+                >
+                  <svg class="game-button__icon" aria-hidden="true"><use href="#icon-play" /></svg>
+                  <span id="btn-save-player-text">Lưu và vào đường đua</span>
+                </button>
+                <button
+                  type="button"
+                  class="game-button game-button--neutral game-button--small is-hidden"
+                  id="btn-edit-profile"
+                  data-testid="btn-edit-profile"
+                >
+                  Sửa hồ sơ
+                </button>
+                <button
+                  type="button"
+                  class="game-button game-button--neutral game-button--small is-hidden"
+                  id="btn-cancel-edit"
+                  data-testid="btn-cancel-edit"
+                >
+                  Huỷ
+                </button>
+              </div>
+            </section>
+
+            <!-- --------------------- Leaderboard ----------------------- -->
+            <section
+              class="board board--leaderboard"
+              aria-labelledby="lb-title"
+              data-testid="leaderboard"
+            >
+              <h2 class="board__title" id="lb-title">
+                <svg class="board__title-icon" aria-hidden="true"><use href="#icon-trophy" /></svg>
+                Bảng thành tích
+              </h2>
+
+              <div class="lb__filters">
+                <div class="lb__grades" id="lb-grades" role="radiogroup" aria-label="Chọn lớp"></div>
+                <div class="lb__periods" role="radiogroup" aria-label="Khoảng thời gian">
+                  <button
+                    type="button"
+                    class="lb__period"
+                    id="btn-period-weekly"
+                    role="radio"
+                    aria-checked="true"
+                    data-testid="btn-period-weekly"
+                  >
+                    Tuần này
+                  </button>
+                  <button
+                    type="button"
+                    class="lb__period"
+                    id="btn-period-all"
+                    role="radio"
+                    aria-checked="false"
+                    data-testid="btn-period-all"
+                  >
+                    Mọi thời đại
+                  </button>
+                  <button
+                    type="button"
+                    class="icon-button icon-button--tiny"
+                    id="btn-lb-refresh"
+                    aria-label="Tải lại bảng thành tích"
+                    data-testid="btn-lb-refresh"
+                  >
+                    <svg class="icon-button__glyph" aria-hidden="true"><use href="#icon-refresh" /></svg>
+                  </button>
+                </div>
+              </div>
+
+              <ol class="lb__rows" id="lb-rows" data-testid="lb-rows"></ol>
+
+              <p class="lb__message is-hidden" id="lb-message" data-testid="lb-message" role="status"></p>
+              <button
+                type="button"
+                class="game-button game-button--small is-hidden"
+                id="btn-lb-retry"
+                data-testid="btn-lb-retry"
+              >
+                Thử lại
+              </button>
+              <button
+                type="button"
+                class="game-button game-button--neutral game-button--small is-hidden"
+                id="btn-lb-expand"
+                data-testid="btn-lb-expand"
+              >
+                Xem đủ Top 10
+              </button>
+            </section>
+          </div>
+
+          <div class="home__corner home__corner--left">
+            <button
+              type="button"
+              class="icon-button"
+              id="btn-mute-hub"
+              aria-label="Tắt âm thanh"
+              data-testid="btn-mute-hub"
+            >
+              <svg class="icon-button__glyph" id="mute-icon-hub" aria-hidden="true">
+                <use href="#icon-sound-on" />
+              </svg>
+            </button>
+          </div>
+          <div class="home__corner home__corner--right">
+            <button
+              type="button"
+              class="icon-button"
+              id="btn-credits-hub"
+              aria-label="Nguồn tài nguyên mở"
+              data-testid="btn-credits-hub"
+            >
+              <svg class="icon-button__glyph" aria-hidden="true"><use href="#icon-book" /></svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================= AVATAR PICKER ========================= -->
+      <section
+        id="screen-avatar-picker"
+        class="screen screen--dimmed is-hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="avatar-picker-title"
+        data-testid="avatar-picker"
+      >
+        <div class="screen__center screen__center--bottom">
+          <div class="board board--wide avatar-picker">
+            <h2 class="board__title" id="avatar-picker-title">Chọn avatar</h2>
+
+            <div class="avatar-picker__tabs" id="avatar-categories" role="tablist"></div>
+            <div class="avatar-picker__grid" id="avatar-grid" data-testid="avatar-grid"></div>
+
+            <div class="board__actions">
+              <button
+                type="button"
+                class="game-button"
+                id="btn-avatar-done"
+                data-testid="btn-avatar-done"
+              >
+                Xong
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================== HOME ============================= -->
+      <section id="screen-home" class="screen is-hidden" data-testid="screen-home">
+        <div class="home">
+          <div class="home__top">
+            <div class="logo">
+              <svg class="logo__flag" aria-hidden="true"><use href="#icon-checkered" /></svg>
+              <h1 class="logo__line logo__line--top">Đường đua</h1>
+              <span class="logo__line logo__line--bottom">Toán học</span>
+            </div>
+            <p class="home__tagline">Chọn lớp và cùng chạy nào!</p>
+          </div>
+
+          <div class="home__bottom">
+            <p class="pass__notice is-hidden" id="home-notice" data-testid="home-notice" role="status"></p>
+            <p class="home__best" id="home-best" data-testid="home-best">
+              <svg class="home__best-icon" aria-hidden="true"><use href="#icon-trophy" /></svg>
+              <span id="home-best-text">Cùng lập kỷ lục đầu tiên nào!</span>
+            </p>
+
+            <fieldset class="medals">
+              <legend class="medals__legend sr-only">Chọn lớp của bạn</legend>
+              <div class="medals" id="grade-medals" role="radiogroup" aria-label="Chọn lớp"></div>
+            </fieldset>
+
+            <button
+              type="button"
+              class="game-button game-button--huge"
+              id="btn-start"
+              data-testid="btn-start"
+            >
+              <svg class="game-button__icon" aria-hidden="true"><use href="#icon-play" /></svg>
+              Bắt đầu
+            </button>
+          </div>
+
+          <div class="home__corner home__corner--left">
+            <button
+              type="button"
+              class="icon-button"
+              id="btn-mute-home"
+              aria-label="Tắt âm thanh"
+              data-testid="btn-mute-home"
+            >
+              <svg class="icon-button__glyph" id="mute-icon-home" aria-hidden="true">
+                <use href="#icon-sound-on" />
+              </svg>
+            </button>
+          </div>
+          <div class="home__corner home__corner--right">
+            <button
+              type="button"
+              class="icon-button"
+              id="btn-credits"
+              aria-label="Nguồn tài nguyên mở"
+              data-testid="btn-credits"
+            >
+              <svg class="icon-button__glyph" aria-hidden="true"><use href="#icon-book" /></svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================ TUTORIAL =========================== -->
+      <section id="screen-tutorial" class="screen is-hidden" data-testid="screen-tutorial">
+        <div class="tutorial">
+          <p class="tutorial__line">Vuốt hoặc bấm ◀ ▶ để chọn cổng đúng</p>
+          <svg class="tutorial__hand" id="tutorial-hand" aria-hidden="true">
+            <use href="#icon-hand" />
+          </svg>
+          <p class="tutorial__line" id="tutorial-hint" data-testid="tutorial-hint">
+            Thử đổi làn một lần nhé!
+          </p>
+          <button
+            type="button"
+            class="game-button tutorial__ready is-hidden"
+            id="btn-ready"
+            data-testid="btn-ready"
+          >
+            Sẵn sàng!
+          </button>
+          <button
+            type="button"
+            class="game-button game-button--small game-button--neutral is-hidden"
+            id="btn-skip-tutorial"
+            data-testid="btn-skip-tutorial"
+          >
+            Bỏ qua hướng dẫn
+          </button>
+        </div>
+      </section>
+
+      <!-- =========================== COUNTDOWN =========================== -->
+      <section id="screen-countdown" class="screen is-hidden" data-testid="screen-countdown">
+        <div class="screen__center">
+          <p
+            class="countdown"
+            id="countdown-value"
+            data-testid="countdown-value"
+            aria-live="assertive"
+          >
+            3
+          </p>
+        </div>
+      </section>
+
+      <!-- ============================== HUD ============================== -->
+      <section id="screen-hud" class="hud is-hidden" data-testid="screen-hud">
+        <div class="hud__top">
+          <div class="hud__left">
+            <div class="progress-badge">
+              <svg class="progress-badge__icon" aria-hidden="true"><use href="#icon-flag" /></svg>
+              <span class="progress-badge__value" id="hud-progress" data-testid="hud-progress"
+                >1/12</span
+              >
+            </div>
+            <div class="hud__track-row">
+              <div class="progress-track">
+                <div class="progress-track__fill" id="hud-progress-fill"></div>
+              </div>
+              <svg class="progress-flag" aria-hidden="true"><use href="#icon-checkered" /></svg>
+            </div>
+          </div>
+
+          <div class="hud__right">
+            <div class="coin-badge">
+              <svg class="coin-badge__icon" aria-hidden="true"><use href="#icon-coin" /></svg>
+              <span class="coin-badge__value" id="hud-score" data-testid="hud-score">0</span>
+            </div>
+            <div class="hud__buttons">
+              <button
+                type="button"
+                class="icon-button"
+                id="btn-mute-hud"
+                aria-label="Tắt âm thanh"
+                data-testid="btn-mute-hud"
+              >
+                <svg class="icon-button__glyph" id="mute-icon-hud" aria-hidden="true">
+                  <use href="#icon-sound-on" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="icon-button"
+                id="btn-pause"
+                aria-label="Tạm dừng"
+                data-testid="btn-pause"
+              >
+                <svg class="icon-button__glyph" aria-hidden="true"><use href="#icon-pause" /></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="hud__question-area">
+          <p
+            class="question-board"
+            id="hud-question"
+            data-testid="hud-question"
+            aria-live="polite"
+          ></p>
+          <p class="streak-chip streak-chip--practice is-hidden" id="hud-practice" data-testid="hud-practice">
+            Chế độ luyện tập — không tính bảng xếp hạng
+          </p>
+          <p class="streak-chip is-hidden" id="hud-streak" data-testid="hud-streak">
+            <svg class="streak-chip__icon" aria-hidden="true"><use href="#icon-bolt" /></svg>
+            <span id="hud-streak-text">Chuỗi ×2</span>
+          </p>
+        </div>
+
+        <div class="feedback is-hidden" id="hud-feedback" data-testid="hud-banner" role="status">
+          <span class="feedback__title" id="feedback-title">
+            <svg class="feedback__icon" id="feedback-icon" aria-hidden="true">
+              <use href="#icon-check" />
+            </svg>
+            <span id="feedback-title-text"></span>
+          </span>
+          <span class="feedback__detail is-hidden" id="feedback-detail"></span>
+        </div>
+
+        <div class="hud__pads">
+          <button
+            type="button"
+            class="lane-pad"
+            id="btn-left"
+            aria-label="Sang làn bên trái"
+            data-testid="btn-left"
+          >
+            <svg class="lane-pad__glyph" aria-hidden="true"><use href="#icon-arrow-left" /></svg>
+          </button>
+          <button
+            type="button"
+            class="lane-pad"
+            id="btn-right"
+            aria-label="Sang làn bên phải"
+            data-testid="btn-right"
+          >
+            <svg class="lane-pad__glyph" aria-hidden="true"><use href="#icon-arrow-right" /></svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- ============================= PAUSE ============================= -->
+      <section
+        id="screen-pause"
+        class="screen screen--dimmed is-hidden"
+        data-testid="screen-pause"
+      >
+        <div class="screen__center">
+          <div class="board board--narrow board--hanging">
+            <h2 class="board__title">
+              <svg class="board__title-icon" aria-hidden="true"><use href="#icon-clock" /></svg>
+              Tạm dừng
+            </h2>
+            <p class="board__text">Đường đua đang chờ bạn quay lại.</p>
+            <div class="board__actions">
+              <button type="button" class="game-button" id="btn-resume" data-testid="btn-resume">
+                <svg class="game-button__icon" aria-hidden="true"><use href="#icon-play" /></svg>
+                Tiếp tục
+              </button>
+              <button
+                type="button"
+                class="game-button game-button--secondary game-button--small"
+                id="btn-restart"
+                data-testid="btn-restart"
+              >
+                Chơi lại
+              </button>
+              <button
+                type="button"
+                class="game-button game-button--neutral game-button--small"
+                id="btn-home"
+                data-testid="btn-home"
+              >
+                Về trang chủ
+              </button>
+            </div>
+            <div class="board__actions is-hidden" id="restart-confirm" data-testid="restart-confirm">
+              <p class="board__text">Chơi lại sẽ bỏ lượt đang chạy. Bạn chắc chứ?</p>
+              <div class="board__row">
+                <button
+                  type="button"
+                  class="game-button game-button--small"
+                  id="btn-restart-yes"
+                  data-testid="btn-restart-yes"
+                >
+                  Chơi lại
+                </button>
+                <button
+                  type="button"
+                  class="game-button game-button--neutral game-button--small"
+                  id="btn-restart-no"
+                  data-testid="btn-restart-no"
+                >
+                  Quay lại
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================ RESULT ============================= -->
+      <section id="screen-result" class="screen is-hidden" data-testid="screen-result">
+        <div class="result">
+          <div class="result__top">
+            <div class="result__stars" id="result-stars" data-testid="result-stars"></div>
+            <p class="result__ribbon is-hidden" id="result-record" data-testid="result-record">
+              <svg class="result__ribbon-icon" aria-hidden="true">
+                <use href="#icon-trophy" />
+              </svg>
+              KỶ LỤC MỚI!
+            </p>
+            <h2 class="result__headline" id="result-headline" data-testid="result-headline"></h2>
+            <p class="result__score">
+              <svg class="result__score-icon" aria-hidden="true"><use href="#icon-coin" /></svg>
+              <span id="result-score" data-testid="result-score">0</span>
+            </p>
+            <p class="result__streak result__streak--rank is-hidden" id="result-rank" data-testid="result-rank">
+              <svg class="result__streak-icon" aria-hidden="true"><use href="#icon-medal" /></svg>
+              <span id="result-rank-text"></span>
+            </p>
+            <p class="pass__notice is-hidden" id="result-notice" data-testid="result-notice" role="status"></p>
+            <p class="result__chips">
+              <span class="result__streak">
+                <svg class="result__streak-icon" aria-hidden="true"><use href="#icon-bolt" /></svg>
+                <span id="result-streak" data-testid="result-streak">Chuỗi dài nhất 0</span>
+              </span>
+              <span class="result__streak result__streak--best">
+                <svg class="result__streak-icon" aria-hidden="true"><use href="#icon-trophy" /></svg>
+                <span id="result-best" data-testid="result-best">Kỷ lục 0</span>
+              </span>
+            </p>
+          </div>
+
+          <div class="result__bottom">
+            <button
+              type="button"
+              class="game-button game-button--huge"
+              id="btn-replay"
+              data-testid="btn-replay"
+            >
+              <svg class="game-button__icon" aria-hidden="true"><use href="#icon-play" /></svg>
+              Chạy lại
+            </button>
+            <button
+              type="button"
+              class="game-button game-button--secondary game-button--small"
+              id="btn-change-grade"
+              data-testid="btn-change-grade"
+            >
+              Chọn lớp khác
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================ CREDITS ============================ -->
+      <section
+        id="screen-credits"
+        class="screen screen--dimmed is-hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="credits-title"
+        data-testid="modal-credits"
+      >
+        <div class="screen__center">
+          <div class="board board--wide board--hanging">
+            <h2 class="board__title" id="credits-title">
+              <svg class="board__title-icon" aria-hidden="true"><use href="#icon-book" /></svg>
+              Nguồn tài nguyên mở
+            </h2>
+            <div class="credits">
+              <p class="credits__row">
+                <strong>Mô hình 3D &amp; hiệu ứng âm thanh:</strong> Kenney (CC0)
+              </p>
+              <p class="credits__row">
+                <strong>Nhạc nền:</strong> Children's March Theme — Cleyton Kauffman (CC0)
+              </p>
+              <p class="credits__row"><strong>Font Baloo 2:</strong> SIL Open Font License 1.1</p>
+              <p class="credits__row"><strong>Mã nguồn game:</strong> MIT</p>
+              <p class="credits__note">
+                Toàn bộ hình ảnh và âm thanh trong game đều thuộc phạm vi công cộng (CC0). Chi tiết
+                được ghi trong tệp ASSET_SOURCES.md của dự án.
+              </p>
+            </div>
+            <div class="board__actions">
+              <button
+                type="button"
+                class="game-button"
+                id="btn-credits-close"
+                data-testid="btn-credits-close"
+              >
+                Quay lại
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

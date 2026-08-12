@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.cache/
+playwright-report/
+test-results/
+artifacts/
+.DS_Store
+*.local
+.env
+.env.*
+!.env.example
+
+# Never commit raw asset packs or archives - only the whitelisted files
+# produced by scripts/fetch-assets.* belong in public/assets/.
+*.zip

@@ -1,0 +1,129 @@
+/* Design tokens, font and reset for the "Toy Adventure Arcade" look. */
+
+@font-face {
+  font-family: 'Baloo 2';
+  /* Self-hosted (SIL OFL 1.1). No font CDN is contacted at runtime. */
+  src: url('/assets/fonts/baloo2/Baloo2-Variable.ttf') format('truetype-variations');
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* World */
+  --c-sky: #bfe8ff;
+  --c-grass: #78c850;
+  --c-road: #596a7a;
+  --c-road-line: #f8fafc;
+
+  /* Controls */
+  --c-primary: #ffb703;
+  --c-primary-light: #ffd35c;
+  --c-primary-edge: #d97904;
+  --c-secondary: #21b6d7;
+  --c-secondary-light: #6ad9f2;
+  --c-secondary-edge: #117c9b;
+  --c-badge: #7b61e8;
+  --c-badge-light: #a394f5;
+  --c-badge-edge: #4d38a8;
+
+  /* Surfaces */
+  --c-outline: #243b53;
+  --c-panel: #fff4c7;
+  --c-panel-edge: #a9602a;
+  --c-panel-edge-dark: #7d431a;
+
+  /* Semantics */
+  --c-correct: #2ecc71;
+  --c-correct-edge: #1e8f4e;
+  --c-wrong: #ff8a65;
+  --c-wrong-edge: #c85f3d;
+  --c-coin: #ffd166;
+  --c-text: #183153;
+  --c-overlay: rgba(12, 24, 45, 0.72);
+
+  --font-game: 'Baloo 2', ui-rounded, 'Segoe UI', Arial, sans-serif;
+
+  /* Question board: 32px floor on mobile, 46px on desktop. */
+  --text-question: clamp(2rem, 1.35rem + 2.8vw, 2.875rem);
+  --text-logo: clamp(2.25rem, 1.1rem + 5.6vw, 4.5rem);
+  --text-score: clamp(1.5rem, 1.15rem + 1.6vw, 2.25rem);
+
+  --radius-button: 18px;
+  --radius-panel: 22px;
+
+  --dur-press: 90ms;
+  --dur-panel: 300ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-game);
+  font-weight: 600;
+  color: var(--c-text);
+  /* Matches the sky so there is never a white flash before the scene draws. */
+  background: var(--c-sky);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+  font-variant-numeric: tabular-nums;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+svg {
+  display: block;
+  fill: currentColor;
+}
+
+.is-hidden {
+  display: none !important;
+}
+
+/* Screen-reader-only text for controls whose meaning is carried by an icon. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
