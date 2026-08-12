@@ -9,8 +9,7 @@ const browser = await chromium.launch({
   args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
 });
 
-const snap = (page) =>
-  page.evaluate(() => window.__MATH_RUNNER_DEBUG__?.getSnapshot() ?? null);
+const snap = (page) => page.evaluate(() => window.__MATH_RUNNER_DEBUG__?.getSnapshot() ?? null);
 
 async function waitFor(page, predicate, label, timeout = 30000) {
   const deadline = Date.now() + timeout;
@@ -52,7 +51,10 @@ async function run(name, width, height) {
 
   // Answer question 1 correctly and capture the feedback moment.
   let s = await waitFor(page, (x) => x.activeQuestion !== null, 'question');
-  await page.evaluate((lane) => window.__MATH_RUNNER_DEBUG__.moveToLane(lane), s.activeQuestion.correctIndex);
+  await page.evaluate(
+    (lane) => window.__MATH_RUNNER_DEBUG__.moveToLane(lane),
+    s.activeQuestion.correctIndex,
+  );
   await waitFor(page, (x) => x.questionIndex > s.questionIndex, 'q1 resolve');
   await page.screenshot({ path: `${OUT}/feedback-correct-${name}.png` });
 
@@ -72,8 +74,15 @@ async function run(name, width, height) {
   for (let i = 0; i < 12; i += 1) {
     const cur = await snap(page);
     if (!cur || cur.phase === 'finished' || cur.activeQuestion === null) break;
-    await page.evaluate((lane) => window.__MATH_RUNNER_DEBUG__.moveToLane(lane), cur.activeQuestion.correctIndex);
-    await waitFor(page, (x) => x.questionIndex > cur.questionIndex || x.phase === 'finished', `q${i}`);
+    await page.evaluate(
+      (lane) => window.__MATH_RUNNER_DEBUG__.moveToLane(lane),
+      cur.activeQuestion.correctIndex,
+    );
+    await waitFor(
+      page,
+      (x) => x.questionIndex > cur.questionIndex || x.phase === 'finished',
+      `q${i}`,
+    );
   }
 
   await page.waitForSelector('[data-testid="screen-result"]:not(.is-hidden)', { timeout: 30000 });

@@ -60,7 +60,11 @@ export function createIntegerDistractors(
 }
 
 /** Takes the first two usable distractors, or returns null when impossible. */
-function pickTwo(candidates: readonly number[], format: (n: number) => string, correct: string): [string, string] | null {
+function pickTwo(
+  candidates: readonly number[],
+  format: (n: number) => string,
+  correct: string,
+): [string, string] | null {
   const seen = new Set<string>([correct]);
   const chosen: string[] = [];
   for (const candidate of candidates) {
@@ -160,13 +164,7 @@ function generateDivision(grade: Grade, rng: Rng): RawQuestion | null {
   const quotient = grade >= 4 ? rng.int(2, 20) : rng.int(2, 9);
   const dividend = divisor * quotient;
 
-  const candidates = rng.shuffle([
-    quotient + 1,
-    quotient - 1,
-    quotient + 2,
-    quotient - 2,
-    divisor,
-  ]);
+  const candidates = rng.shuffle([quotient + 1, quotient - 1, quotient + 2, quotient - 2, divisor]);
   const distractors = pickTwo(
     candidates.filter((value) => value > 0 && value !== quotient),
     formatInteger,
@@ -373,7 +371,9 @@ function generateFraction(rng: Rng): RawQuestion | null {
 function generateForTopic(topic: Topic, grade: Grade, rng: Rng): RawQuestion | null {
   switch (topic) {
     case 'addition':
-      return grade >= 4 && rng.chance(0.45) ? generateExpression(rng) : generateAddition(grade, rng);
+      return grade >= 4 && rng.chance(0.45)
+        ? generateExpression(rng)
+        : generateAddition(grade, rng);
     case 'subtraction':
       return generateSubtraction(grade, rng);
     case 'multiplication':

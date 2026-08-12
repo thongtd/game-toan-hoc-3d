@@ -119,7 +119,7 @@ function evaluateExpression(tokens: readonly string[]): Value | null {
   }
 
   // First pass: multiplication and division.
-  for (let i = 0; i < operators.length; ) {
+  for (let i = 0; i < operators.length;) {
     const operator = operators[i];
     const left = values[i];
     const right = values[i + 1];

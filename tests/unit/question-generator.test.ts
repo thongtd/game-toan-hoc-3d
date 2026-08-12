@@ -7,7 +7,11 @@ import { evaluatePrompt, validateQuestion } from '../../shared/math/question-val
 import { ALL_GRADES } from '../../shared/game-types.ts';
 import type { Grade, Question } from '../../shared/game-types.ts';
 import { createRng } from '../../shared/math/seeded-rng.ts';
-import { SEED_QUESTIONS, buildFallbackRun, getSeedQuestions } from '../../shared/content/seed-questions.ts';
+import {
+  SEED_QUESTIONS,
+  buildFallbackRun,
+  getSeedQuestions,
+} from '../../shared/content/seed-questions.ts';
 
 /** Generates at least `minimum` questions for a grade across several runs. */
 function generateMany(grade: Grade, minimum: number): Question[] {
@@ -165,7 +169,9 @@ describe('generateQuestions', () => {
     let identical = 0;
     const samples = 100;
     for (let seed = 1; seed <= samples; seed += 1) {
-      const a = generateQuestions({ grade: 3, seed, count: 12 }).map((q) => q.prompt).join('|');
+      const a = generateQuestions({ grade: 3, seed, count: 12 })
+        .map((q) => q.prompt)
+        .join('|');
       const b = generateQuestions({ grade: 3, seed: seed + 1000, count: 12 })
         .map((q) => q.prompt)
         .join('|');

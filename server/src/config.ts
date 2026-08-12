@@ -83,7 +83,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     .filter((origin) => origin.length > 0);
 
   if (nodeEnv === 'production' && corsOrigins.includes('*')) {
-    throw new ConfigError('CORS_ORIGINS cannot be "*" in production because requests are authenticated.');
+    throw new ConfigError(
+      'CORS_ORIGINS cannot be "*" in production because requests are authenticated.',
+    );
   }
 
   return {

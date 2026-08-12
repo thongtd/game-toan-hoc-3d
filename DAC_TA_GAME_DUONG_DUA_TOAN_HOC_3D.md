@@ -149,16 +149,16 @@ const crossedGate = previousPlayerZ > gateZ && currentPlayerZ <= gateZ;
 
 Thông số khởi tạo đề xuất:
 
-| Thông số | Giá trị |
-| --- | ---: |
-| Tốc độ đầu lượt | 8 đơn vị/giây |
-| Tốc độ tối đa | 12 đơn vị/giây |
-| Tăng tốc sau mỗi câu | 0,28 đơn vị/giây |
-| Cổng đầu tiên | Cách người chơi 48 đơn vị |
-| Khoảng cách cổng tiếp theo | 45–55 đơn vị |
-| Thời gian feedback | 800 ms |
-| Thời gian chuyển làn | 220 ms |
-| Số câu/lượt | 12 |
+| Thông số                   |                   Giá trị |
+| -------------------------- | ------------------------: |
+| Tốc độ đầu lượt            |             8 đơn vị/giây |
+| Tốc độ tối đa              |            12 đơn vị/giây |
+| Tăng tốc sau mỗi câu       |          0,28 đơn vị/giây |
+| Cổng đầu tiên              | Cách người chơi 48 đơn vị |
+| Khoảng cách cổng tiếp theo |              45–55 đơn vị |
+| Thời gian feedback         |                    800 ms |
+| Thời gian chuyển làn       |                    220 ms |
+| Số câu/lượt                |                        12 |
 
 Nếu qua thử nghiệm thực tế học sinh lớp 1 không đủ thời gian đọc, giảm tốc riêng cho lớp 1 xuống 7 đơn vị/giây và không tăng quá 9,5.
 
@@ -176,11 +176,11 @@ Nếu qua thử nghiệm thực tế học sinh lớp 1 không đủ thời gian
 
 ### 3.7. Sao cuối lượt
 
-| Kết quả | Số sao |
-| --- | ---: |
-| 10–12 câu đúng | 3 |
-| 7–9 câu đúng | 2 |
-| 0–6 câu đúng | 1 |
+| Kết quả        | Số sao |
+| -------------- | -----: |
+| 10–12 câu đúng |      3 |
+| 7–9 câu đúng   |      2 |
+| 0–6 câu đúng   |      1 |
 
 Luôn trao ít nhất một sao để trẻ có cảm giác đã hoàn thành lượt chơi.
 
@@ -242,13 +242,13 @@ export interface Question {
 
 ### 4.2. Nội dung theo lớp
 
-| Lớp | Chủ đề dùng trong game | Giới hạn |
-| --- | --- | --- |
-| 1 | Cộng, trừ, so sánh, số còn thiếu | Trong phạm vi 20; phép trừ không âm |
-| 2 | Cộng/trừ, so sánh, số còn thiếu | Trong phạm vi 100 |
-| 3 | Nhân/chia, cộng/trừ | Bảng nhân 2–9; chia hết; cộng/trừ trong 1.000 |
-| 4 | Nhân, chia, biểu thức hai bước | Nhân với số một chữ số; chia hết; không có số âm |
-| 5 | Thập phân đơn giản, phân số cùng mẫu, biểu thức | Tối đa một chữ số thập phân; phân số tối giản nhỏ |
+| Lớp | Chủ đề dùng trong game                          | Giới hạn                                          |
+| --- | ----------------------------------------------- | ------------------------------------------------- |
+| 1   | Cộng, trừ, so sánh, số còn thiếu                | Trong phạm vi 20; phép trừ không âm               |
+| 2   | Cộng/trừ, so sánh, số còn thiếu                 | Trong phạm vi 100                                 |
+| 3   | Nhân/chia, cộng/trừ                             | Bảng nhân 2–9; chia hết; cộng/trừ trong 1.000     |
+| 4   | Nhân, chia, biểu thức hai bước                  | Nhân với số một chữ số; chia hết; không có số âm  |
+| 5   | Thập phân đơn giản, phân số cùng mẫu, biểu thức | Tối đa một chữ số thập phân; phân số tối giản nhỏ |
 
 ### 4.3. Quy tắc sinh câu hỏi
 
@@ -355,25 +355,25 @@ Cho phép dùng panel DOM ở pause/kết quả, nhưng panel phải được th
 
 ### 5.4. Bảng màu
 
-| Vai trò | Màu |
-| --- | --- |
-| Bầu trời | `#BFE8FF` |
-| Cỏ | `#78C850` |
-| Đường | `#596A7A` |
-| Vạch đường | `#F8FAFC` |
-| Primary/button chơi | `#FFB703` |
-| Cạnh dưới button primary | `#D97904` |
-| Secondary/UI xanh | `#21B6D7` |
-| Cạnh dưới button secondary | `#117C9B` |
-| Tím huy hiệu | `#7B61E8` |
-| Viền UI tối | `#243B53` |
-| Mặt panel kem | `#FFF4C7` |
-| Viền panel gỗ | `#A9602A` |
-| Đúng | `#2ECC71` |
-| Sai/nhắc thử lại | `#FF8A65` |
-| Thưởng/đồng xu | `#FFD166` |
-| Chữ chính | `#183153` |
-| Overlay tối | `rgba(12, 24, 45, 0.72)` |
+| Vai trò                    | Màu                      |
+| -------------------------- | ------------------------ |
+| Bầu trời                   | `#BFE8FF`                |
+| Cỏ                         | `#78C850`                |
+| Đường                      | `#596A7A`                |
+| Vạch đường                 | `#F8FAFC`                |
+| Primary/button chơi        | `#FFB703`                |
+| Cạnh dưới button primary   | `#D97904`                |
+| Secondary/UI xanh          | `#21B6D7`                |
+| Cạnh dưới button secondary | `#117C9B`                |
+| Tím huy hiệu               | `#7B61E8`                |
+| Viền UI tối                | `#243B53`                |
+| Mặt panel kem              | `#FFF4C7`                |
+| Viền panel gỗ              | `#A9602A`                |
+| Đúng                       | `#2ECC71`                |
+| Sai/nhắc thử lại           | `#FF8A65`                |
+| Thưởng/đồng xu             | `#FFD166`                |
+| Chữ chính                  | `#183153`                |
+| Overlay tối                | `rgba(12, 24, 45, 0.72)` |
 
 Quy tắc phối màu:
 
@@ -388,15 +388,15 @@ Self-host **Baloo 2 Variable** cho toàn bộ title, số điểm, câu hỏi v�
 
 ```css
 @font-face {
-  font-family: "Baloo 2";
-  src: url("/assets/fonts/baloo2/Baloo2-Variable.ttf") format("truetype");
+  font-family: 'Baloo 2';
+  src: url('/assets/fonts/baloo2/Baloo2-Variable.ttf') format('truetype');
   font-weight: 400 800;
   font-style: normal;
   font-display: swap;
 }
 
 :root {
-  font-family: "Baloo 2", ui-rounded, "Segoe UI", Arial, sans-serif;
+  font-family: 'Baloo 2', ui-rounded, 'Segoe UI', Arial, sans-serif;
 }
 ```
 
@@ -430,11 +430,16 @@ Nút chính không được là hình chữ nhật phẳng. Tạo component `.ga
     0 14px 22px rgba(25, 45, 70, 0.28),
     inset 0 3px 0 rgba(255, 255, 255, 0.65);
   color: #183153;
-  font: 800 24px/1 "Baloo 2", sans-serif;
+  font:
+    800 24px/1 'Baloo 2',
+    sans-serif;
   text-shadow: 0 2px 0 rgba(255, 255, 255, 0.35);
   cursor: pointer;
   transform: translateY(0);
-  transition: transform 90ms ease, box-shadow 90ms ease, filter 120ms ease;
+  transition:
+    transform 90ms ease,
+    box-shadow 90ms ease,
+    filter 120ms ease;
 }
 
 .game-button:hover {
@@ -495,14 +500,14 @@ Layer 5 — Toast/feedback ngắn
 
 Home không phải landing page. Dùng bố cục sau:
 
-| Vùng | Desktop | Mobile portrait |
-| --- | --- | --- |
-| Thế giới 3D | Toàn màn hình, camera thấp nhìn dọc đường đua | Toàn màn hình, camera gần nhân vật hơn |
-| Nhân vật | Lệch trái khoảng 28–35%, idle/vẫy tay | Giữa-dưới, chiếm khoảng 30% chiều cao |
-| Logo/tên game | Phía trên trung tâm hoặc trên-phải | Trên cùng, tối đa 28% chiều cao |
-| Chọn lớp | Hàng huy hiệu ở dưới logo | Hàng 5 huy hiệu gọn trên nút chơi |
-| Bắt đầu | Nút lớn cạnh nhân vật/giữa dưới | Nút lớn giữa, ngay trên safe area |
-| Mute/Credits | Hai nút icon nhỏ ở hai góc | Hai nút icon nhỏ ở hai góc |
+| Vùng          | Desktop                                       | Mobile portrait                        |
+| ------------- | --------------------------------------------- | -------------------------------------- |
+| Thế giới 3D   | Toàn màn hình, camera thấp nhìn dọc đường đua | Toàn màn hình, camera gần nhân vật hơn |
+| Nhân vật      | Lệch trái khoảng 28–35%, idle/vẫy tay         | Giữa-dưới, chiếm khoảng 30% chiều cao  |
+| Logo/tên game | Phía trên trung tâm hoặc trên-phải            | Trên cùng, tối đa 28% chiều cao        |
+| Chọn lớp      | Hàng huy hiệu ở dưới logo                     | Hàng 5 huy hiệu gọn trên nút chơi      |
+| Bắt đầu       | Nút lớn cạnh nhân vật/giữa dưới               | Nút lớn giữa, ngay trên safe area      |
+| Mute/Credits  | Hai nút icon nhỏ ở hai góc                    | Hai nút icon nhỏ ở hai góc             |
 
 Chi tiết:
 
@@ -671,21 +676,21 @@ Không dùng physics engine. Game chỉ cần chuyển làn và trigger qua cổ
 
 ### 6.2. Phiên bản đã kiểm tra ngày 12/08/2026
 
-| Package | Version | License |
-| --- | ---: | --- |
-| `three` | `0.185.1` | MIT |
-| `howler` | `2.2.4` | MIT |
-| `vite` | `8.2.1` | MIT |
-| `typescript` | `7.0.2` | Apache-2.0 |
-| `vitest` | `4.1.10` | MIT |
-| `@playwright/test` | `1.62.1` | Apache-2.0 |
-| `@types/three` | `0.185.4` | MIT |
-| `@types/howler` | `2.2.13` | MIT |
-| `eslint` | `10.8.1` | MIT |
-| `@eslint/js` | `10.0.1` | MIT |
-| `typescript-eslint` | `8.67.0` | MIT |
-| `globals` | `17.10.0` | MIT |
-| `prettier` | `3.9.6` | MIT |
+| Package             |   Version | License    |
+| ------------------- | --------: | ---------- |
+| `three`             | `0.185.1` | MIT        |
+| `howler`            |   `2.2.4` | MIT        |
+| `vite`              |   `8.2.1` | MIT        |
+| `typescript`        |   `7.0.2` | Apache-2.0 |
+| `vitest`            |  `4.1.10` | MIT        |
+| `@playwright/test`  |  `1.62.1` | Apache-2.0 |
+| `@types/three`      | `0.185.4` | MIT        |
+| `@types/howler`     |  `2.2.13` | MIT        |
+| `eslint`            |  `10.8.1` | MIT        |
+| `@eslint/js`        |  `10.0.1` | MIT        |
+| `typescript-eslint` |  `8.67.0` | MIT        |
+| `globals`           | `17.10.0` | MIT        |
+| `prettier`          |   `3.9.6` | MIT        |
 
 Nếu triển khai vào thời điểm khác, ưu tiên giữ các phiên bản trên để kết quả tái lập. Chỉ nâng version trong một commit riêng sau khi toàn bộ test đang xanh.
 
@@ -843,10 +848,10 @@ License.txt
 
 Claude Code phải nghe thử các file và map theo cảm xúc. Mapping khởi tạo đề xuất:
 
-| Event | File gợi ý |
-| --- | --- |
-| Đúng | `jingles_PIZZI00.ogg` |
-| Sai nhẹ | `jingles_NES13.ogg` |
+| Event      | File gợi ý            |
+| ---------- | --------------------- |
+| Đúng       | `jingles_PIZZI00.ogg` |
+| Sai nhẹ    | `jingles_NES13.ogg`   |
 | Hoàn thành | `jingles_PIZZI07.ogg` |
 | Kỷ lục mới | `jingles_PIZZI03.ogg` |
 
@@ -1413,17 +1418,17 @@ Các screenshot chỉ là artifact kiểm thử, có thể không commit nếu r
 
 ### 13.2. Ngân sách
 
-| Hạng mục | Mục tiêu |
-| --- | ---: |
-| JS gzip | ≤ 250 KB, cho phép cảnh báo Vite nhưng phải giải thích nếu vượt |
-| Model + texture phục vụ lượt đầu | ≤ 1,8 MB |
-| Audio cần thiết | ≤ 3,5 MB |
-| Tổng initial playable | ≤ 6 MB |
-| Texture | Tối đa 2048 px; ưu tiên asset gốc nhỏ hơn |
-| Pixel ratio | Cap 1,5 mặc định |
-| Shadow map | Tối đa 1024 |
-| Active particle | Tối đa 80 |
-| Decoration visible | Khoảng 40–60 object, dùng pooling |
+| Hạng mục                         |                                                        Mục tiêu |
+| -------------------------------- | --------------------------------------------------------------: |
+| JS gzip                          | ≤ 250 KB, cho phép cảnh báo Vite nhưng phải giải thích nếu vượt |
+| Model + texture phục vụ lượt đầu |                                                        ≤ 1,8 MB |
+| Audio cần thiết                  |                                                        ≤ 3,5 MB |
+| Tổng initial playable            |                                                          ≤ 6 MB |
+| Texture                          |                       Tối đa 2048 px; ưu tiên asset gốc nhỏ hơn |
+| Pixel ratio                      |                                                Cap 1,5 mặc định |
+| Shadow map                       |                                                     Tối đa 1024 |
+| Active particle                  |                                                       Tối đa 80 |
+| Decoration visible               |                               Khoảng 40–60 object, dùng pooling |
 
 Không đưa toàn bộ Platformer Kit, UI Audio hoặc Music Jingles vào `public/`.
 

@@ -30,8 +30,7 @@ export const NICKNAME_MESSAGES: Readonly<Record<NicknameErrorCode, string>> = {
 };
 
 export type NicknameResult =
-  | { ok: true; value: string }
-  | { ok: false; code: NicknameErrorCode; message: string };
+  { ok: true; value: string } | { ok: false; code: NicknameErrorCode; message: string };
 
 interface BlockedConfig {
   words: string[];

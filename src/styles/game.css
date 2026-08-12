@@ -112,7 +112,8 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.25rem 0.85rem 0.25rem 0.35rem;
-  background: linear-gradient(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0)) padding-box,
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0)) padding-box,
     var(--c-panel);
   border: 3px solid var(--c-outline);
   border-radius: 999px;
@@ -158,7 +159,8 @@
   position: relative;
   max-width: min(78vw, 34rem);
   padding: 0.5rem 1.5rem 0.55rem;
-  background: linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0)) padding-box,
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0)) padding-box,
     var(--c-panel);
   border: 4px solid var(--c-panel-edge);
   border-radius: 20px;
@@ -264,12 +266,16 @@
 
 .feedback--correct .feedback__title {
   background: linear-gradient(#5ce08e, var(--c-correct));
-  box-shadow: 0 6px 0 var(--c-correct-edge), 0 12px 20px rgba(12, 24, 45, 0.35);
+  box-shadow:
+    0 6px 0 var(--c-correct-edge),
+    0 12px 20px rgba(12, 24, 45, 0.35);
 }
 
 .feedback--wrong .feedback__title {
   background: linear-gradient(#ffab8c, var(--c-wrong));
-  box-shadow: 0 6px 0 var(--c-wrong-edge), 0 12px 20px rgba(12, 24, 45, 0.35);
+  box-shadow:
+    0 6px 0 var(--c-wrong-edge),
+    0 12px 20px rgba(12, 24, 45, 0.35);
 }
 
 .feedback__icon {

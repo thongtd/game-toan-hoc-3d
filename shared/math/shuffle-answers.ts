@@ -25,7 +25,8 @@ export function placeAnswers(
   }
 
   const candidates: LaneIndex[] = [0, 1, 2];
-  const allowed = forbiddenIndex === null ? candidates : candidates.filter((i) => i !== forbiddenIndex);
+  const allowed =
+    forbiddenIndex === null ? candidates : candidates.filter((i) => i !== forbiddenIndex);
 
   const correctIndex = rng.pick(allowed);
   if (!isLaneIndex(correctIndex)) {

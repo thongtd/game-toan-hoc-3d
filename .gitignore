@@ -1,5 +1,9 @@
 node_modules/
 dist/
+# Player data and run history: local to each machine, never committed.
+data/
+# Per-developer permission grants; team-wide settings live in .claude/settings.json
+.claude/settings.local.json
 .cache/
 playwright-report/
 test-results/

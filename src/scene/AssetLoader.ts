@@ -6,15 +6,7 @@ import { required } from '../utils/assert-never.ts';
 import { disposeMaterial, isMesh, toMaterialList } from '../utils/dispose-three.ts';
 
 export type ModelId =
-  | 'character'
-  | 'coin'
-  | 'tree'
-  | 'treePine'
-  | 'rocks'
-  | 'crate'
-  | 'fence'
-  | 'flag'
-  | 'chest';
+  'character' | 'coin' | 'tree' | 'treePine' | 'rocks' | 'crate' | 'fence' | 'flag' | 'chest';
 
 interface ModelEntry {
   id: ModelId;
@@ -36,7 +28,10 @@ const MODEL_MANIFEST: readonly ModelEntry[] = [
 ];
 
 export class AssetLoadError extends Error {
-  constructor(readonly assetUrl: string, cause?: unknown) {
+  constructor(
+    readonly assetUrl: string,
+    cause?: unknown,
+  ) {
     super(`Failed to load asset: ${assetUrl}`);
     this.name = 'AssetLoadError';
     this.cause = cause;

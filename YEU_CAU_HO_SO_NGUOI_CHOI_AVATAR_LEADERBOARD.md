@@ -148,11 +148,11 @@ Màn hình phải giống **sảnh trước cuộc đua**, không giống form �
 
 ### 4.2. Bố cục desktop
 
-| Vùng | Tỷ lệ gợi ý | Nội dung |
-| --- | ---: | --- |
-| Player Pass | 38–42% | Avatar, nickname, tuổi, CTA |
-| Khoảng thở/cảnh 3D | 8–12% | Nhân vật/cổng xuất phát |
-| Bảng xếp hạng | 42–48% | Filter lớp, period, top 10 |
+| Vùng               | Tỷ lệ gợi ý | Nội dung                    |
+| ------------------ | ----------: | --------------------------- |
+| Player Pass        |      38–42% | Avatar, nickname, tuổi, CTA |
+| Khoảng thở/cảnh 3D |       8–12% | Nhân vật/cổng xuất phát     |
+| Bảng xếp hạng      |      42–48% | Filter lớp, period, top 10  |
 
 - Player Pass nằm trái hoặc giữa-trái.
 - Leaderboard nằm phải.
@@ -247,14 +247,14 @@ Regex chỉ là lớp kiểm tra đầu tiên; cần validate theo code point v�
 
 ### 5.4. Mã lỗi và copy
 
-| Code | Copy người dùng |
-| --- | --- |
-| `NICKNAME_REQUIRED` | `Hãy đặt một biệt danh nhé!` |
-| `NICKNAME_TOO_SHORT` | `Biệt danh cần ít nhất 2 ký tự.` |
-| `NICKNAME_TOO_LONG` | `Biệt danh tối đa 16 ký tự.` |
-| `NICKNAME_INVALID_CHARS` | `Biệt danh có ký tự chưa phù hợp.` |
-| `NICKNAME_PRIVATE_INFO` | `Đừng dùng số điện thoại, email hoặc đường dẫn nhé!` |
-| `NICKNAME_BLOCKED` | `Hãy chọn một biệt danh vui vẻ khác nhé!` |
+| Code                     | Copy người dùng                                      |
+| ------------------------ | ---------------------------------------------------- |
+| `NICKNAME_REQUIRED`      | `Hãy đặt một biệt danh nhé!`                         |
+| `NICKNAME_TOO_SHORT`     | `Biệt danh cần ít nhất 2 ký tự.`                     |
+| `NICKNAME_TOO_LONG`      | `Biệt danh tối đa 16 ký tự.`                         |
+| `NICKNAME_INVALID_CHARS` | `Biệt danh có ký tự chưa phù hợp.`                   |
+| `NICKNAME_PRIVATE_INFO`  | `Đừng dùng số điện thoại, email hoặc đường dẫn nhé!` |
+| `NICKNAME_BLOCKED`       | `Hãy chọn một biệt danh vui vẻ khác nhé!`            |
 
 ---
 
@@ -288,13 +288,13 @@ Tuổi **không được**:
 
 Nếu muốn preselect grade sau khi tạo hồ sơ:
 
-| Tuổi | Grade gợi ý |
-| ---: | ---: |
-| 6 | 1 |
-| 7 | 2 |
-| 8 | 3 |
-| 9 | 4 |
-| 10–12 | 5 |
+|  Tuổi | Grade gợi ý |
+| ----: | ----------: |
+|     6 |           1 |
+|     7 |           2 |
+|     8 |           3 |
+|     9 |           4 |
+| 10–12 |           5 |
 
 Đây chỉ là giá trị mặc định UI. Người chơi vẫn được chọn lớp khác ở màn hình game.
 
@@ -313,12 +313,12 @@ Nếu muốn preselect grade sau khi tạo hồ sơ:
 
 ### 7.2. Các nhóm bắt buộc
 
-| Nhóm | ID | Ví dụ |
-| --- | --- | --- |
-| Con vật | `animals` | mèo, chó, gấu trúc, ếch, voi, khỉ |
-| Robot | `robots` | robot xanh, vàng, tím, robot một mắt |
-| Máy bay/vũ trụ | `aircraft` | máy bay, phi thuyền, UFO |
-| Xe và xe tăng | `vehicles` | xe tăng, xe đua, xe địa hình |
+| Nhóm           | ID         | Ví dụ                                |
+| -------------- | ---------- | ------------------------------------ |
+| Con vật        | `animals`  | mèo, chó, gấu trúc, ếch, voi, khỉ    |
+| Robot          | `robots`   | robot xanh, vàng, tím, robot một mắt |
+| Máy bay/vũ trụ | `aircraft` | máy bay, phi thuyền, UFO             |
+| Xe và xe tăng  | `vehicles` | xe tăng, xe đua, xe địa hình         |
 
 Không sử dụng vũ khí, đạn, hiệu ứng nổ hoặc hình ảnh mang tính bạo lực trong thumbnail. Xe tăng được minh họa theo phong cách đồ chơi đáng yêu, không có cảnh chiến đấu.
 
@@ -422,12 +422,12 @@ So sánh lần lượt:
 
 ### 8.5. Nội dung hiển thị
 
-| Cột | Nội dung |
-| --- | --- |
-| Hạng | 1, 2, 3…; top 3 dùng huy chương |
-| Avatar | 40–52 px, lấy từ manifest |
+| Cột      | Nội dung                                   |
+| -------- | ------------------------------------------ |
+| Hạng     | 1, 2, 3…; top 3 dùng huy chương            |
+| Avatar   | 40–52 px, lấy từ manifest                  |
 | Nickname | Tối đa 16 ký tự, truncate bằng CSS nếu cần |
-| Điểm | Số lớn cạnh icon đồng xu |
+| Điểm     | Số lớn cạnh icon đồng xu                   |
 
 Không hiển thị:
 
@@ -1563,4 +1563,3 @@ Nếu bất kỳ tiêu chí bắt buộc nào chưa đạt, trạng thái cuối
 - Space Shooter Remastered: <https://kenney.nl/assets/space-shooter-remastered>
 - Tanks: <https://kenney.nl/assets/tanks>
 - Top-down Tanks Remastered: <https://kenney.nl/assets/top-down-tanks-remastered>
-

@@ -18,10 +18,10 @@ export const PROFILE_MESSAGES: Readonly<Record<AgeErrorCode | AvatarErrorCode, s
   AVATAR_UNKNOWN: 'Hình đại diện này không còn dùng được, chọn hình khác nhé!',
 };
 
-export type AgeResult = { ok: true; value: number } | { ok: false; code: AgeErrorCode; message: string };
+export type AgeResult =
+  { ok: true; value: number } | { ok: false; code: AgeErrorCode; message: string };
 export type AvatarResult =
-  | { ok: true; value: string }
-  | { ok: false; code: AvatarErrorCode; message: string };
+  { ok: true; value: string } | { ok: false; code: AvatarErrorCode; message: string };
 
 export function validateAge(input: unknown): AgeResult {
   if (input === null || input === undefined || input === '') {

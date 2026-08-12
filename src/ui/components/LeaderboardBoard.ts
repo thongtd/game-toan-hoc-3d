@@ -8,7 +8,14 @@ import type {
 import { resolveAvatarForDisplay } from '../../../shared/content/avatars.ts';
 import { formatScore } from '../../../shared/math/format-number.ts';
 import { resolveAssetUrl } from '../../utils/asset-url.ts';
-import { createIcon, onClick, requireElement, requireElementOfType, setHidden, setText } from '../dom.ts';
+import {
+  createIcon,
+  onClick,
+  requireElement,
+  requireElementOfType,
+  setHidden,
+  setText,
+} from '../dom.ts';
 
 export interface LeaderboardFilters {
   grade: Grade;
@@ -98,7 +105,10 @@ export class LeaderboardBoard {
       button.setAttribute('aria-checked', grade === filters.grade ? 'true' : 'false');
     }
     this.weeklyButton.setAttribute('aria-checked', filters.period === 'weekly' ? 'true' : 'false');
-    this.allTimeButton.setAttribute('aria-checked', filters.period === 'all_time' ? 'true' : 'false');
+    this.allTimeButton.setAttribute(
+      'aria-checked',
+      filters.period === 'all_time' ? 'true' : 'false',
+    );
   }
 
   get currentFilters(): LeaderboardFilters {
@@ -185,7 +195,11 @@ export class LeaderboardBoard {
     rank.className = 'lb__rank';
     if (entry.rank <= 3) {
       const medalClass =
-        entry.rank === 1 ? 'lb__medal--gold' : entry.rank === 2 ? 'lb__medal--silver' : 'lb__medal--bronze';
+        entry.rank === 1
+          ? 'lb__medal--gold'
+          : entry.rank === 2
+            ? 'lb__medal--silver'
+            : 'lb__medal--bronze';
       rank.append(createIcon('icon-medal', `lb__medal ${medalClass}`));
       rank.setAttribute('aria-label', `Hạng ${String(entry.rank)}`);
     } else {

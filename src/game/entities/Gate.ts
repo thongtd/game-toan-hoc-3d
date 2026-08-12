@@ -207,7 +207,11 @@ export class Gate {
   }
 
   /** Arms the gate at a world Z with a new set of answers. */
-  setQuestion(answers: readonly [string, string, string], correctIndex: LaneIndex, z: number): void {
+  setQuestion(
+    answers: readonly [string, string, string],
+    correctIndex: LaneIndex,
+    z: number,
+  ): void {
     this.correctLane = correctIndex;
     this.group.position.z = z;
     this.group.visible = true;

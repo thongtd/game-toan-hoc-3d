@@ -147,11 +147,7 @@ export function sendJson(res: ServerResponse, status: number, body: unknown): vo
   res.end(payload);
 }
 
-export function sendError(
-  res: ServerResponse,
-  requestId: string,
-  error: HttpError,
-): void {
+export function sendError(res: ServerResponse, requestId: string, error: HttpError): void {
   const body: ApiErrorBody = {
     error: {
       code: error.code,

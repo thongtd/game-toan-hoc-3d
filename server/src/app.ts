@@ -139,11 +139,7 @@ export function createApp(
 
     if (matched === null) {
       const status = router.hasPath(routePath) ? 405 : 404;
-      sendError(
-        res,
-        requestId,
-        new HttpError(status, 'NOT_FOUND', 'Đường dẫn không tồn tại.'),
-      );
+      sendError(res, requestId, new HttpError(status, 'NOT_FOUND', 'Đường dẫn không tồn tại.'));
       return;
     }
 
@@ -155,7 +151,7 @@ export function createApp(
       requestId,
       clientKey: clientKeyFor(req, config.trustProxy),
       player: null,
-      readJson: <T,>() => readJsonBody<T>(req, config.bodyLimitBytes),
+      readJson: <T>() => readJsonBody<T>(req, config.bodyLimitBytes),
     };
 
     try {

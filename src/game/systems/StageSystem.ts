@@ -32,7 +32,12 @@ export class StageSystem {
 
     this.startLine = new FinishLine(assets, 'start');
     this.finishLine = new FinishLine(assets, 'finish');
-    this.group.add(this.startLine.group, this.finishLine.group, this.showcaseCoins, this.laneGuides);
+    this.group.add(
+      this.startLine.group,
+      this.finishLine.group,
+      this.showcaseCoins,
+      this.laneGuides,
+    );
 
     this.buildShowcaseCoins(assets);
     this.buildLaneGuides();
