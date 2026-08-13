@@ -19,6 +19,7 @@
     "test:contract": "vitest run server/tests/repository-contract.test.ts",
     "test:api": "vitest run server/tests/api.test.ts",
     "test:e2e": "playwright test",
+    "ui:review": "node scripts/ui-review.mjs",
     "assets:validate": "node scripts/validate-assets.mjs",
     "assets:thumbnails": "node scripts/capture-map-thumbnails.mjs",
     "server:dev": "node --watch server/src/index.ts",

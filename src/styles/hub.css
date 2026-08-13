@@ -595,6 +595,7 @@
   .pass__avatar {
     width: 76px;
     height: 76px;
+    padding: 8px;
     border-radius: 18px;
   }
 

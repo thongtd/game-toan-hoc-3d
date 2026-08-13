@@ -101,6 +101,21 @@ Lần đầu chạy E2E cần tải trình duyệt:
 npx playwright install chromium
 ```
 
+### Rà soát UI thủ công
+
+`npm run ui:review` đi hết một lượt chơi ở ba khung màn hình (390×844, 360×640,
+1440×900), chụp ảnh từng màn và in số đo tràn ngang/dọc cùng vị trí các phần tử
+chính trên Home. Dùng khi sửa CSS để thấy ngay bố cục có bị lệch không.
+
+```bash
+npm run dev                                          # cần server web đang chạy
+npm run ui:review                                    # → artifacts/review/
+npm run ui:review -- http://127.0.0.1:4173 artifacts/review-build
+```
+
+Hai tham số tuỳ chọn là URL gốc (mặc định `http://127.0.0.1:5173`) và thư mục
+xuất ảnh (mặc định `artifacts/review`). Thư mục `artifacts/` đã được gitignore.
+
 ## 6. Build và chạy production
 
 ```bash
